@@ -1,0 +1,14 @@
+// src/crm/adapters/webhook-only.js
+// Minimal adapter for clients who don't have a CRM yet.
+// Just logs locally and fires the downstream webhook via the CRM index.
+
+async function createContact(data) {
+  console.log("[CRM: webhook-only] Lead:", data);
+  return { logged: true };
+}
+
+async function logDisqualified(data) {
+  console.log("[CRM: webhook-only] Disqualified:", data);
+}
+
+module.exports = { createContact, logDisqualified };
