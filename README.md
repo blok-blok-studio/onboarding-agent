@@ -82,13 +82,15 @@ Supports WhatsApp, Telegram, Discord, Slack, Signal, iMessage, and the web widge
 
 | Document | Description |
 |----------|-------------|
-| [CLAUDE.md](CLAUDE.md) | Project overview for AI assistants |
-| [OPENCLAW.md](OPENCLAW.md) | OpenClaw 24/7 deployment + multi-channel setup |
+| [CLIENT-SETUP.md](CLIENT-SETUP.md) | Step-by-step client onboarding guide |
+| [BOOTSTRAP.md](BOOTSTRAP.md) | First-run checklist |
 | [SECURITY.md](SECURITY.md) | Security architecture and production checklist |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Railway, Docker, Vercel, and VPS deployment guides |
 | [API.md](API.md) | API reference for all endpoints |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Railway, Docker, and VPS deployment guides |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System design and request flow |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development guidelines and adapter patterns |
+| [OPENCLAW.md](OPENCLAW.md) | OpenClaw 24/7 deployment + multi-channel setup |
+| [CLAUDE.md](CLAUDE.md) | Project overview for AI assistants |
 
 ---
 
