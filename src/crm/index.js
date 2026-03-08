@@ -8,6 +8,12 @@
 const ADAPTER_NAME = (process.env.CRM_ADAPTER || "webhook-only").toLowerCase().trim();
 const VALID_ADAPTERS = ["hubspot", "salesforce", "pipedrive", "zoho", "airtable", "webhook-only"];
 
+// Sanitize adapter name to prevent path traversal
+if (!/^[a-z0-9-]+$/.test(ADAPTER_NAME)) {
+  console.error(`[CRM] Invalid adapter name: "${ADAPTER_NAME}" — only alphanumeric and hyphens allowed`);
+  process.exit(1);
+}
+
 if (!VALID_ADAPTERS.includes(ADAPTER_NAME)) {
   // Allow custom adapters — just try to require the file
   console.warn(`[CRM] Custom adapter: "${ADAPTER_NAME}" — loading from ./adapters/${ADAPTER_NAME}`);
@@ -118,10 +124,10 @@ async function fireWebhookWithRetry(url, payload, attempt = 0) {
 
 /**
  * Send a team notification via configured provider.
- * Supports: Slack webhook, email (Resend), or console fallback.
+ * Supports: Slack webhook, pluggable email adapter, or console fallback.
  */
 async function notifyTeam(subject, body) {
-  const email = clientConfig.notifications?.notifyEmail;
+  const email = process.env.NOTIFICATION_EMAIL;
   const slackWebhook = process.env.SLACK_NOTIFICATION_WEBHOOK;
 
   // Slack webhook (if configured)
@@ -130,16 +136,26 @@ async function notifyTeam(subject, body) {
     return;
   }
 
-  // Email via Resend (if RESEND_API_KEY is set)
-  if (process.env.RESEND_API_KEY && email) {
-    await sendEmailNotification(email, subject, body);
-    return;
+  // Email via pluggable adapter
+  if (email) {
+    try {
+      const { sendEmail } = require("../notifications/email");
+      const from = process.env.NOTIFICATION_FROM_EMAIL || clientConfig.emails?.from || "agent@blokblokstudio.com";
+      const brandName = clientConfig.brand?.name || "Onboarding Agent";
+      const sent = await sendEmail({
+        to: email,
+        from,
+        subject: `[${brandName}] ${subject}`,
+        text: body,
+      });
+      if (sent) return;
+    } catch (err) {
+      console.error("[Notify] Email adapter error:", err.message);
+    }
   }
 
   // Fallback: console log
-  if (email) {
-    console.log(`[Notify] ${subject} (console fallback)`);
-  }
+  console.log(`[Notify] ${subject} (console fallback)`);
 }
 
 async function sendSlackNotification(webhookUrl, subject, body) {
@@ -156,32 +172,6 @@ async function sendSlackNotification(webhookUrl, subject, body) {
   }
 
   console.log("[Notify] Slack notification sent");
-}
-
-async function sendEmailNotification(to, subject, body) {
-  const fromEmail = process.env.NOTIFICATION_FROM_EMAIL || "agent@blokblokstudio.com";
-  const brandName = clientConfig.brand?.name || "Onboarding Agent";
-
-  const res = await fetchWithTimeout("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`
-    },
-    body: JSON.stringify({
-      from: `${brandName} Agent <${fromEmail}>`,
-      to: [to],
-      subject: `[${brandName}] ${subject}`,
-      text: body,
-    })
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Resend API error: ${err.message || res.status}`);
-  }
-
-  console.log(`[Notify] Email sent: ${subject}`);
 }
 
 // ── Notification formatters ────────────────────────────────────

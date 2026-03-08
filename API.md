@@ -47,6 +47,7 @@ Send a message and receive the agent's response.
 | 400 | `{ "error": "This conversation has ended." }` | Session already closed |
 | 400 | `{ "error": "Conversation limit reached..." }` | Too many turns |
 | 429 | `{ "error": "Too many requests..." }` | Rate limit exceeded |
+| 429 | `{ "error": "Please wait a moment..." }` | Per-session rate limit (2s) |
 | 500 | `{ "error": "Something went wrong..." }` | Internal error |
 
 ### Rate Limit
@@ -57,6 +58,28 @@ Rate limit headers are included in responses:
 - `RateLimit-Limit`
 - `RateLimit-Remaining`
 - `RateLimit-Reset`
+
+---
+
+## POST /api/start
+
+Start a new session and receive the agent greeting without making a Claude API call.
+
+### Request
+
+No body required.
+
+### Response (200)
+
+```json
+{
+  "sessionId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "reply": "Hi there! I'm Sarah, a patient coordinator...",
+  "done": false
+}
+```
+
+The greeting comes from `config/client.js` `agent.greeting`.
 
 ---
 
@@ -71,7 +94,8 @@ Returns public branding info for the chat UI. No authentication required.
   "brandName": "Your Company Name",
   "brandTagline": "A short description",
   "agentName": "Alex",
-  "agentRole": "Onboarding Specialist"
+  "agentRole": "Onboarding Specialist",
+  "primaryColor": "#2563eb"
 }
 ```
 
@@ -79,13 +103,24 @@ Returns public branding info for the chat UI. No authentication required.
 
 ## GET /api/health
 
-Health check endpoint for monitoring.
+Health check endpoint for monitoring. Returns DB connectivity status.
 
 ### Response (200)
 
 ```json
 {
   "status": "ok",
+  "db": "connected",
+  "ts": "2026-03-08T20:00:00.000Z"
+}
+```
+
+### Response (503) — Degraded
+
+```json
+{
+  "status": "degraded",
+  "db": "disconnected",
   "ts": "2026-03-08T20:00:00.000Z"
 }
 ```
@@ -96,7 +131,7 @@ No sensitive information is exposed.
 
 ## Downstream Webhook
 
-When a lead is submitted and `DOWNSTREAM_WEBHOOK_URL` is configured, the server fires a POST:
+When a lead is submitted and `DOWNSTREAM_WEBHOOK_URL` is configured, the server fires a POST with retry (3 attempts, exponential backoff):
 
 ### Payload
 

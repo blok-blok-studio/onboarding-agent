@@ -5,7 +5,12 @@
   "main": "src/api/server.js",
   "scripts": {
     "start": "node src/api/server.js",
-    "dev": "nodemon src/api/server.js"
+    "dev": "nodemon src/api/server.js",
+    "test": "node --test 'tests/**/*.test.js'",
+    "setup": "./scripts/setup.sh"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

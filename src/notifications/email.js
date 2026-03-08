@@ -15,6 +15,12 @@ const { maskEmail } = require("../utils/fetch");
 const ADAPTER_NAME = (process.env.EMAIL_ADAPTER || "resend").toLowerCase().trim();
 const VALID_ADAPTERS = ["resend", "sendgrid", "mailgun", "smtp"];
 
+// Sanitize adapter name to prevent path traversal
+if (!/^[a-z0-9-]+$/.test(ADAPTER_NAME)) {
+  console.error(`[Email] Invalid adapter name: "${ADAPTER_NAME}" — only alphanumeric and hyphens allowed`);
+  process.exit(1);
+}
+
 let adapter;
 try {
   adapter = require(`./adapters/${ADAPTER_NAME}`);

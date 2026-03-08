@@ -30,7 +30,7 @@ async function sendEmail({ to, from, subject, text }) {
       headers: {
         "Authorization": `Basic ${Buffer.from(`api:${MAILGUN_API_KEY}`).toString("base64")}`,
       },
-      body: formData.toString(),
+      body: formData,
     });
 
     if (!res.ok) {

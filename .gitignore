@@ -3,6 +3,7 @@ node_modules/
 .env.local
 .env.production
 *.log
+logs/
 .DS_Store
 coverage/
 dist/
@@ -10,4 +11,4 @@ dist/
 .vscode/
 *.pem
 *.key
-.vercel
+.vercel/
