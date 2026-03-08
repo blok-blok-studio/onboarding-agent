@@ -92,8 +92,8 @@ if (!USE_MEMORY) {
     max: parseInt(process.env.DB_POOL_MAX || "10", 10),
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
-    ssl: process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: true }
+    ssl: process.env.DATABASE_URL?.includes("sslmode=require")
+      ? { rejectUnauthorized: false }
       : undefined,
   });
 
