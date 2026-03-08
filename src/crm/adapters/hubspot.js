@@ -2,6 +2,8 @@
 // HubSpot implementation of the CRM adapter interface.
 // All adapters must export: createContact(), logDisqualified()
 
+const { fetchWithTimeout, maskEmail } = require("../../utils/fetch");
+
 const BASE = process.env.HUBSPOT_API_URL || "https://api.hubapi.com";
 
 function headers() {
@@ -35,7 +37,7 @@ async function createContact(data) {
   }
 
   // Create contact
-  const res = await fetch(`${BASE}/crm/v3/objects/contacts`, {
+  const res = await fetchWithTimeout(`${BASE}/crm/v3/objects/contacts`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ properties })
@@ -54,7 +56,7 @@ async function createContact(data) {
   }
 
   const contactId = body.id;
-  console.log(`[HubSpot] Contact created: ${data.email || "no email"}, id: ${contactId}`);
+  console.log(`[HubSpot] Contact created: ${maskEmail(data.email)}, id: ${contactId}`);
 
   // Log a note with intake data
   if (contactId) {
@@ -68,7 +70,7 @@ async function createContact(data) {
  * Update an existing contact by email (for 409 conflict resolution).
  */
 async function updateExistingContact(data) {
-  const searchRes = await fetch(`${BASE}/crm/v3/objects/contacts/search`, {
+  const searchRes = await fetchWithTimeout(`${BASE}/crm/v3/objects/contacts/search`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
@@ -91,7 +93,7 @@ async function updateExistingContact(data) {
   const contactId = searchBody.results[0].id;
   const properties = flattenForHubspot(data);
 
-  const updateRes = await fetch(`${BASE}/crm/v3/objects/contacts/${contactId}`, {
+  const updateRes = await fetchWithTimeout(`${BASE}/crm/v3/objects/contacts/${contactId}`, {
     method: "PATCH",
     headers: headers(),
     body: JSON.stringify({ properties })
@@ -103,7 +105,7 @@ async function updateExistingContact(data) {
     throw new Error(`HubSpot update error: ${errBody.message}`);
   }
 
-  console.log(`[HubSpot] Contact updated: ${data.email}, id: ${contactId}`);
+  console.log(`[HubSpot] Contact updated: ${maskEmail(data.email)}, id: ${contactId}`);
   await createNote(contactId, data);
   return { contactId, updated: true };
 }
@@ -117,7 +119,7 @@ async function createNote(contactId, data) {
     .map(([k, v]) => `${k}: ${v}`)
     .join("\n");
 
-  const res = await fetch(`${BASE}/crm/v3/objects/notes`, {
+  const res = await fetchWithTimeout(`${BASE}/crm/v3/objects/notes`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
@@ -163,7 +165,7 @@ async function logDisqualified(data) {
     return;
   }
 
-  const res = await fetch(`${BASE}/crm/v3/objects/contacts`, {
+  const res = await fetchWithTimeout(`${BASE}/crm/v3/objects/contacts`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ properties })
@@ -208,9 +210,9 @@ async function testConnection() {
   if (!process.env.HUBSPOT_API_KEY) return { connected: false, reason: "No API key" };
 
   try {
-    const res = await fetch(`${BASE}/crm/v3/objects/contacts?limit=1`, {
+    const res = await fetchWithTimeout(`${BASE}/crm/v3/objects/contacts?limit=1`, {
       headers: headers()
-    });
+    }, 10000);
     if (res.ok) return { connected: true };
     return { connected: false, reason: `HTTP ${res.status}` };
   } catch (err) {

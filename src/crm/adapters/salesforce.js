@@ -8,6 +8,8 @@
 // Salesforce uses the REST API to create Lead objects.
 // Docs: https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/
 
+const { fetchWithTimeout, maskEmail } = require("../../utils/fetch");
+
 const INSTANCE_URL = process.env.SALESFORCE_INSTANCE_URL;
 const API_VERSION = process.env.SALESFORCE_API_VERSION || "v59.0";
 
@@ -52,7 +54,7 @@ async function createContact(data) {
     if (lead[key] === undefined) delete lead[key];
   }
 
-  const res = await fetch(`${baseUrl()}/sobjects/Lead`, {
+  const res = await fetchWithTimeout(`${baseUrl()}/sobjects/Lead`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify(lead),
@@ -71,35 +73,42 @@ async function createContact(data) {
   }
 
   const leadId = body.id;
-  console.log(`[Salesforce] Lead created: ${data.email || "no email"}, id: ${leadId}`);
+  console.log(`[Salesforce] Lead created: ${maskEmail(data.email)}, id: ${leadId}`);
   return { contactId: leadId };
 }
 
 /**
- * Update an existing Lead found by email.
+ * Update an existing Lead found by email using Salesforce parameterized search.
+ * Uses the search API instead of raw SOQL to prevent injection.
  */
 async function updateExistingLead(data) {
-  const query = encodeURIComponent(`SELECT Id FROM Lead WHERE Email = '${data.email}' LIMIT 1`);
-  const searchRes = await fetch(`${baseUrl()}/query/?q=${query}`, {
+  // Use parameterizedSearch — safe against injection (no raw SOQL)
+  const searchRes = await fetchWithTimeout(`${baseUrl()}/parameterizedSearch`, {
+    method: "POST",
     headers: headers(),
+    body: JSON.stringify({
+      q: data.email,
+      sobjects: [{ name: "Lead", fields: ["Id"] }],
+      overallLimit: 1,
+    }),
   });
 
   const searchBody = await searchRes.json();
-  if (!searchRes.ok || !searchBody.records?.length) {
+  if (!searchRes.ok || !searchBody.searchRecords?.length) {
     console.error("[Salesforce] Could not find existing lead for update");
     throw new Error("Lead exists but could not be found for update");
   }
 
-  const leadId = searchBody.records[0].Id;
+  const leadId = searchBody.searchRecords[0].Id;
 
-  const updateRes = await fetch(`${baseUrl()}/sobjects/Lead/${leadId}`, {
+  const updatePayload = { Description: buildDescription(data) };
+  if (data.role) updatePayload.Title = data.role;
+  if (data.phone) updatePayload.Phone = data.phone;
+
+  const updateRes = await fetchWithTimeout(`${baseUrl()}/sobjects/Lead/${leadId}`, {
     method: "PATCH",
     headers: headers(),
-    body: JSON.stringify({
-      Description: buildDescription(data),
-      Title: data.role || undefined,
-      Phone: data.phone || undefined,
-    }),
+    body: JSON.stringify(updatePayload),
   });
 
   if (!updateRes.ok && updateRes.status !== 204) {
@@ -107,7 +116,7 @@ async function updateExistingLead(data) {
     throw new Error(`Salesforce update error: ${errBody[0]?.message || updateRes.status}`);
   }
 
-  console.log(`[Salesforce] Lead updated: ${data.email}, id: ${leadId}`);
+  console.log(`[Salesforce] Lead updated: ${maskEmail(data.email)}, id: ${leadId}`);
   return { contactId: leadId, updated: true };
 }
 
@@ -124,7 +133,7 @@ async function logDisqualified(data) {
 
   const nameParts = (data.name || "Unknown").trim().split(/\s+/);
 
-  const res = await fetch(`${baseUrl()}/sobjects/Lead`, {
+  const res = await fetchWithTimeout(`${baseUrl()}/sobjects/Lead`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
@@ -152,7 +161,7 @@ async function testConnection() {
   }
 
   try {
-    const res = await fetch(`${baseUrl()}/limits`, { headers: headers() });
+    const res = await fetchWithTimeout(`${baseUrl()}/limits`, { headers: headers() }, 10000);
     if (res.ok) return { connected: true };
     return { connected: false, reason: `HTTP ${res.status}` };
   } catch (err) {

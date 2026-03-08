@@ -8,6 +8,8 @@
 //
 // Docs: https://airtable.com/developers/web/api/introduction
 
+const { fetchWithTimeout, maskEmail } = require("../../utils/fetch");
+
 const BASE_ID = process.env.AIRTABLE_BASE_ID;
 const TABLE = process.env.AIRTABLE_TABLE || "Leads";
 
@@ -56,7 +58,7 @@ async function createContact(data) {
     fields[col] = String(value);
   }
 
-  const res = await fetch(baseUrl(), {
+  const res = await fetchWithTimeout(baseUrl(), {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ records: [{ fields }] }),
@@ -71,7 +73,7 @@ async function createContact(data) {
   }
 
   const recordId = body.records?.[0]?.id;
-  console.log(`[Airtable] Record created: ${data.email || "no email"}, id: ${recordId}`);
+  console.log(`[Airtable] Record created: ${maskEmail(data.email)}, id: ${recordId}`);
   return { contactId: recordId };
 }
 
@@ -89,7 +91,7 @@ async function logDisqualified(data) {
   if (data.name) fields.Name = data.name;
   if (data.email) fields.Email = data.email;
 
-  const res = await fetch(baseUrl(), {
+  const res = await fetchWithTimeout(baseUrl(), {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ records: [{ fields }] }),
@@ -110,7 +112,7 @@ async function testConnection() {
   }
 
   try {
-    const res = await fetch(`${baseUrl()}?maxRecords=1`, { headers: headers() });
+    const res = await fetchWithTimeout(`${baseUrl()}?maxRecords=1`, { headers: headers() }, 10000);
     if (res.ok) return { connected: true };
     return { connected: false, reason: `HTTP ${res.status}` };
   } catch (err) {

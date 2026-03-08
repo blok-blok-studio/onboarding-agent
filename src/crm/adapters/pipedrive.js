@@ -2,10 +2,12 @@
 // Pipedrive CRM adapter.
 //
 // Required env vars:
-//   PIPEDRIVE_API_TOKEN   — API token from Settings → Personal Preferences → API
+//   PIPEDRIVE_API_TOKEN   — API token from Settings > Personal Preferences > API
 //   PIPEDRIVE_DOMAIN      — Your Pipedrive subdomain (e.g. "yourcompany" for yourcompany.pipedrive.com)
 //
 // Docs: https://developers.pipedrive.com/docs/api/v1
+
+const { fetchWithTimeout, maskEmail } = require("../../utils/fetch");
 
 const DOMAIN = process.env.PIPEDRIVE_DOMAIN;
 
@@ -33,7 +35,7 @@ async function createContact(data) {
     phone: data.phone ? [{ value: data.phone, primary: true }] : undefined,
   };
 
-  const personRes = await fetch(`${baseUrl()}/persons?${authParam()}`, {
+  const personRes = await fetchWithTimeout(`${baseUrl()}/persons?${authParam()}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(person),
@@ -48,7 +50,7 @@ async function createContact(data) {
   }
 
   const personId = personBody.data.id;
-  console.log(`[Pipedrive] Person created: ${data.name || "unknown"}, id: ${personId}`);
+  console.log(`[Pipedrive] Person created: ${maskEmail(data.email)}, id: ${personId}`);
 
   // Step 2: Create a Deal linked to the Person
   const deal = {
@@ -57,7 +59,7 @@ async function createContact(data) {
     stage_id: parseInt(process.env.PIPEDRIVE_STAGE_ID || "1", 10),
   };
 
-  const dealRes = await fetch(`${baseUrl()}/deals?${authParam()}`, {
+  const dealRes = await fetchWithTimeout(`${baseUrl()}/deals?${authParam()}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(deal),
@@ -77,7 +79,7 @@ async function createContact(data) {
       .map(([k, v]) => `<b>${k}:</b> ${v}`)
       .join("<br>");
 
-    await fetch(`${baseUrl()}/notes?${authParam()}`, {
+    await fetchWithTimeout(`${baseUrl()}/notes?${authParam()}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -107,7 +109,7 @@ async function logDisqualified(data) {
     email: data.email ? [{ value: data.email, primary: true }] : undefined,
   };
 
-  const res = await fetch(`${baseUrl()}/persons?${authParam()}`, {
+  const res = await fetchWithTimeout(`${baseUrl()}/persons?${authParam()}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(person),
@@ -128,7 +130,7 @@ async function testConnection() {
   }
 
   try {
-    const res = await fetch(`${baseUrl()}/users/me?${authParam()}`);
+    const res = await fetchWithTimeout(`${baseUrl()}/users/me?${authParam()}`, {}, 10000);
     const body = await res.json();
     if (res.ok && body.success) return { connected: true };
     return { connected: false, reason: `API error: ${body.error || res.status}` };

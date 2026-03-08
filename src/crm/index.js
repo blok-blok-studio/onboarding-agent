@@ -37,6 +37,7 @@ console.log(`[CRM] Adapter loaded: ${ADAPTER_NAME}`);
 
 const clientConfig = require("../../config/client");
 const { signPayload } = require("../security/webhook");
+const { fetchWithTimeout, maskEmail } = require("../utils/fetch");
 
 const WEBHOOK_MAX_RETRIES = 3;
 const WEBHOOK_RETRY_DELAY_MS = 2000;
@@ -95,7 +96,7 @@ async function fireWebhookWithRetry(url, payload, attempt = 0) {
   }
 
   try {
-    const res = await fetch(url, { method: "POST", headers: hdrs, body });
+    const res = await fetchWithTimeout(url, { method: "POST", headers: hdrs, body });
 
     if (!res.ok) {
       throw new Error(`Webhook returned ${res.status}`);
@@ -137,12 +138,12 @@ async function notifyTeam(subject, body) {
 
   // Fallback: console log
   if (email) {
-    console.log(`[Notify] → ${email} | ${subject}\n${body}`);
+    console.log(`[Notify] ${subject} (console fallback)`);
   }
 }
 
 async function sendSlackNotification(webhookUrl, subject, body) {
-  const res = await fetch(webhookUrl, {
+  const res = await fetchWithTimeout(webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -154,14 +155,14 @@ async function sendSlackNotification(webhookUrl, subject, body) {
     throw new Error(`Slack webhook returned ${res.status}`);
   }
 
-  console.log(`[Notify] Slack notification sent: ${subject}`);
+  console.log("[Notify] Slack notification sent");
 }
 
 async function sendEmailNotification(to, subject, body) {
   const fromEmail = process.env.NOTIFICATION_FROM_EMAIL || "agent@blokblokstudio.com";
   const brandName = clientConfig.brand?.name || "Onboarding Agent";
 
-  const res = await fetch("https://api.resend.com/emails", {
+  const res = await fetchWithTimeout("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -180,7 +181,7 @@ async function sendEmailNotification(to, subject, body) {
     throw new Error(`Resend API error: ${err.message || res.status}`);
   }
 
-  console.log(`[Notify] Email sent to ${to}: ${subject}`);
+  console.log(`[Notify] Email sent: ${subject}`);
 }
 
 // ── Notification formatters ────────────────────────────────────

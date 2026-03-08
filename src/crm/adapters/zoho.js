@@ -7,6 +7,8 @@
 //
 // Docs: https://www.zoho.com/crm/developer/docs/api/v5/
 
+const { fetchWithTimeout, maskEmail } = require("../../utils/fetch");
+
 const API_DOMAIN = process.env.ZOHO_API_DOMAIN || "https://www.zohoapis.com";
 
 function headers() {
@@ -46,7 +48,7 @@ async function createContact(data) {
     if (lead[key] === undefined) delete lead[key];
   }
 
-  const res = await fetch(`${API_DOMAIN}/crm/v5/Leads`, {
+  const res = await fetchWithTimeout(`${API_DOMAIN}/crm/v5/Leads`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({ data: [lead] }),
@@ -67,7 +69,7 @@ async function createContact(data) {
   }
 
   const leadId = body.data?.[0]?.details?.id;
-  console.log(`[Zoho] Lead created: ${data.email || "no email"}, id: ${leadId}`);
+  console.log(`[Zoho] Lead created: ${maskEmail(data.email)}, id: ${leadId}`);
 
   // Add a note
   if (leadId) {
@@ -81,7 +83,7 @@ async function createContact(data) {
  * Update existing lead found by email.
  */
 async function updateExistingLead(data) {
-  const searchRes = await fetch(
+  const searchRes = await fetchWithTimeout(
     `${API_DOMAIN}/crm/v5/Leads/search?email=${encodeURIComponent(data.email)}`,
     { headers: headers() }
   );
@@ -93,7 +95,7 @@ async function updateExistingLead(data) {
 
   const leadId = searchBody.data[0].id;
 
-  const updateRes = await fetch(`${API_DOMAIN}/crm/v5/Leads/${leadId}`, {
+  const updateRes = await fetchWithTimeout(`${API_DOMAIN}/crm/v5/Leads/${leadId}`, {
     method: "PUT",
     headers: headers(),
     body: JSON.stringify({
@@ -106,7 +108,7 @@ async function updateExistingLead(data) {
     throw new Error(`Zoho update error: ${errBody.message || updateRes.status}`);
   }
 
-  console.log(`[Zoho] Lead updated: ${data.email}, id: ${leadId}`);
+  console.log(`[Zoho] Lead updated: ${maskEmail(data.email)}, id: ${leadId}`);
   await createNote(leadId, data);
   return { contactId: leadId, updated: true };
 }
@@ -120,7 +122,7 @@ async function createNote(leadId, data) {
     .map(([k, v]) => `${k}: ${v}`)
     .join("\n");
 
-  const res = await fetch(`${API_DOMAIN}/crm/v5/Notes`, {
+  const res = await fetchWithTimeout(`${API_DOMAIN}/crm/v5/Notes`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
@@ -152,7 +154,7 @@ async function logDisqualified(data) {
 
   const nameParts = (data.name || "Unknown").trim().split(/\s+/);
 
-  const res = await fetch(`${API_DOMAIN}/crm/v5/Leads`, {
+  const res = await fetchWithTimeout(`${API_DOMAIN}/crm/v5/Leads`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify({
@@ -182,7 +184,7 @@ async function testConnection() {
   }
 
   try {
-    const res = await fetch(`${API_DOMAIN}/crm/v5/org`, { headers: headers() });
+    const res = await fetchWithTimeout(`${API_DOMAIN}/crm/v5/org`, { headers: headers() }, 10000);
     if (res.ok) return { connected: true };
     return { connected: false, reason: `HTTP ${res.status}` };
   } catch (err) {

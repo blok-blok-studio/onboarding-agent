@@ -6,12 +6,14 @@ const { buildSystemPrompt } = require("./prompts");
 const { buildTools } = require("./tools");
 const { submitLead, logDisqualified, escalateToHuman } = require("../crm");
 const clientConfig = require("../../config/client");
+const { isValidEmailFormat } = require("../utils/fetch");
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
+const CLAUDE_TIMEOUT_MS = 60000; // 60s max per API call
 
 /**
  * Send a message and get a response.
@@ -30,7 +32,7 @@ async function chat(messages, sessionId) {
     const toolBlock = response.content.find(b => b.type === "tool_use");
     const { id: toolUseId, name: toolName, input: toolInput } = toolBlock;
 
-    console.log(`[${sessionId}] Tool: ${toolName}`, JSON.stringify(toolInput));
+    console.log(`[${sessionId}] Tool: ${toolName}`);
 
     let toolResult;
     let reply;
@@ -39,6 +41,13 @@ async function chat(messages, sessionId) {
     try {
       switch (toolName) {
         case "submit_lead": {
+          // Validate required fields before CRM submit
+          const validationError = validateLeadData(toolInput);
+          if (validationError) {
+            toolResult = { error: validationError };
+            break;
+          }
+
           const result = await submitLead(toolInput);
           toolResult = { success: true, contactId: result.contactId || null };
           reply = clientConfig.successMessage;
@@ -56,7 +65,6 @@ async function chat(messages, sessionId) {
         case "escalate_to_human": {
           await escalateToHuman(toolInput);
           toolResult = { success: true, escalated: true };
-          // Let Claude compose the escalation reply naturally
           break;
         }
         default: {
@@ -67,26 +75,35 @@ async function chat(messages, sessionId) {
     } catch (err) {
       console.error(`[${sessionId}] Tool error (${toolName}):`, err.message);
 
-      // For submit_lead failures, tell the user something went wrong
       if (toolName === "submit_lead") {
+        // Queue for background retry
+        try {
+          const { queueFailedSubmission } = require("../db/sessions");
+          await queueFailedSubmission(sessionId, toolInput, err.message);
+        } catch (queueErr) {
+          console.error(`[${sessionId}] Failed to queue retry:`, queueErr.message);
+        }
+
         toolResult = { error: "Submission failed. The team has been notified." };
         reply = "I'm sorry — there was a technical issue submitting your information. " +
           "Our team has been notified and will reach out to you directly. " +
           "I apologize for the inconvenience.";
-        done = false; // Don't close the session on failure
+        done = false;
+
+        // Fire webhook even on failure
+        fireFailureWebhook(toolInput, err.message);
+
         return { reply, toolCalled: toolName, done };
       }
 
       toolResult = { error: "Tool execution failed. Please try again." };
     }
 
-    // If the tool already has a fixed reply (submit/disqualify), return it directly
     if (reply) {
       return { reply, toolCalled: toolName, done };
     }
 
-    // For escalation and errors, send the tool result back to Claude
-    // so it can compose a natural response
+    // For escalation, validation errors, and unknowns — let Claude respond
     const continuedMessages = [
       ...messages,
       { role: "assistant", content: response.content },
@@ -121,17 +138,73 @@ async function chat(messages, sessionId) {
 }
 
 /**
- * Call the Claude API with retry logic for transient errors.
+ * Validate lead data before submitting to CRM.
+ * Returns error string if invalid, null if OK.
+ */
+function validateLeadData(data) {
+  const requiredFields = (clientConfig.intake?.fields || [])
+    .filter(f => f.required)
+    .map(f => f.key);
+
+  const missing = requiredFields.filter(key => !data[key] || String(data[key]).trim() === "");
+  if (missing.length > 0) {
+    return `Missing required fields: ${missing.join(", ")}. Please collect this information before submitting.`;
+  }
+
+  if (data.email && !isValidEmailFormat(data.email)) {
+    return `Invalid email format: "${data.email}". Please ask for a valid email address.`;
+  }
+
+  return null;
+}
+
+/**
+ * Fire webhook on CRM failure so downstream systems know.
+ */
+function fireFailureWebhook(leadData, errorMsg) {
+  if (!clientConfig.webhookUrl) return;
+
+  const { fetchWithTimeout } = require("../utils/fetch");
+  const { signPayload } = require("../security/webhook");
+
+  const body = JSON.stringify({
+    event: "submission_failed",
+    lead: leadData,
+    error: errorMsg,
+    ts: new Date().toISOString(),
+  });
+
+  const hdrs = { "Content-Type": "application/json" };
+  const secret = process.env.WEBHOOK_SECRET;
+  if (secret) {
+    hdrs["X-Signature-256"] = `sha256=${signPayload(body, secret)}`;
+  }
+
+  fetchWithTimeout(clientConfig.webhookUrl, { method: "POST", headers: hdrs, body })
+    .catch(err => console.error("[Webhook] Failure notification failed:", err.message));
+}
+
+/**
+ * Call the Claude API with retry logic and timeout.
  */
 async function callClaude(messages, sessionId, attempt = 0) {
   try {
-    return await anthropic.messages.create({
+    const apiCall = anthropic.messages.create({
       model: MODEL,
       max_tokens: 1024,
       system: buildSystemPrompt(),
       tools: buildTools(),
       messages,
     });
+
+    const result = await Promise.race([
+      apiCall,
+      sleep(CLAUDE_TIMEOUT_MS).then(() => {
+        throw new Error(`Claude API timed out after ${CLAUDE_TIMEOUT_MS / 1000}s`);
+      }),
+    ]);
+
+    return result;
   } catch (err) {
     const status = err.status || err.statusCode;
     const isRetryable = status === 429 || status === 529 || (status && status >= 500);

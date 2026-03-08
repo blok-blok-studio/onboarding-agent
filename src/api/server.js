@@ -8,7 +8,12 @@ const path    = require("path");
 const { v4: uuidv4 } = require("uuid");
 
 const { chat }           = require("../agent");
-const { initDb, getMessages, appendMessage, closeSession, getSession, cleanupOldSessions, checkDb } = require("../db/sessions");
+const {
+  initDb, getMessages, appendMessage, closeSession, getSession,
+  cleanupOldSessions, checkDb, closePool,
+  getPendingRetries, resolveSubmission, incrementRetryAttempt,
+} = require("../db/sessions");
+const { submitLead }     = require("../crm");
 const clientConfig        = require("../../config/client");
 const { applySecurityMiddleware, chatLimiter } = require("../security/middleware");
 const { validateChatInput } = require("../security/validate");
@@ -42,8 +47,21 @@ app.use(express.json({ limit: "16kb" }));
 // ── Static files ───────────────────────────────────────────────
 app.use(express.static(path.join(__dirname, "../ui")));
 
-// ── Max conversation turns ─────────────────────────────────────
+// ── Limits ─────────────────────────────────────────────────────
 const MAX_TURNS = parseInt(process.env.MAX_CONVERSATION_TURNS || "50", 10);
+const MAX_HISTORY_BYTES = 64 * 1024; // 64KB max history sent to Claude
+
+// ── Per-session rate limiting (in-memory, prevents spam) ───────
+const sessionLastMessage = new Map();
+const SESSION_MIN_INTERVAL_MS = 2000; // 2 seconds between messages per session
+
+// Clean up stale session timestamps every 10 minutes
+setInterval(() => {
+  const staleThreshold = Date.now() - 30 * 60 * 1000;
+  for (const [key, ts] of sessionLastMessage) {
+    if (ts < staleThreshold) sessionLastMessage.delete(key);
+  }
+}, 10 * 60 * 1000);
 
 // ── POST /api/chat ─────────────────────────────────────────────
 app.post("/api/chat", chatLimiter, async (req, res) => {
@@ -56,6 +74,15 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
 
     const { message, sessionId: existingSessionId } = sanitized;
     const sessionId = existingSessionId || uuidv4();
+
+    // Per-session rate limit
+    if (existingSessionId) {
+      const lastMsg = sessionLastMessage.get(existingSessionId);
+      if (lastMsg && Date.now() - lastMsg < SESSION_MIN_INTERVAL_MS) {
+        return res.status(429).json({ error: "Please wait a moment before sending another message." });
+      }
+    }
+    sessionLastMessage.set(sessionId, Date.now());
 
     // Check if session is already closed
     if (existingSessionId) {
@@ -73,16 +100,34 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
       });
     }
 
+    // Cap history size — trim oldest messages if too large
+    let trimmedHistory = history;
+    const historySize = JSON.stringify(history).length;
+    if (historySize > MAX_HISTORY_BYTES) {
+      // Keep the first message (greeting) and trim from the beginning
+      const first = history[0];
+      trimmedHistory = [first, ...history.slice(-Math.floor(history.length / 2))];
+      console.log(`[${sessionId}] History trimmed: ${historySize} bytes → ${JSON.stringify(trimmedHistory).length} bytes`);
+    }
+
     const userMsg = { role: "user", content: message };
     await appendMessage(sessionId, userMsg);
 
-    const { reply, toolCalled, done } = await chat([...history, userMsg], sessionId);
+    const { reply, toolCalled, done } = await chat([...trimmedHistory, userMsg], sessionId);
 
     await appendMessage(sessionId, { role: "assistant", content: reply });
 
     if (done) {
-      const status = toolCalled === "submit_lead" ? "qualified" : "disqualified";
+      let status;
+      if (toolCalled === "submit_lead") status = "qualified";
+      else if (toolCalled === "log_disqualified") status = "disqualified";
+      else status = "complete";
       await closeSession(sessionId, status);
+    }
+
+    // Track escalations without closing the session
+    if (toolCalled === "escalate_to_human") {
+      await closeSession(sessionId, "escalated");
     }
 
     res.json({ sessionId, reply, done });
@@ -178,18 +223,49 @@ initDb().then(() => {
       .catch(err => console.error("[Cleanup] Error:", err.message));
   }, CLEANUP_INTERVAL);
 
+  // CRM retry worker — runs every 5 minutes, retries failed submissions
+  const RETRY_INTERVAL = 5 * 60 * 1000;
+  setInterval(() => {
+    retryFailedSubmissions()
+      .catch(err => console.error("[Retry] Worker error:", err.message));
+  }, RETRY_INTERVAL);
+
 }).catch(err => {
   console.error("[DB] Init failed:", err.message);
   process.exit(1);
 });
 
+// ── CRM retry worker ────────────────────────────────────────────
+async function retryFailedSubmissions() {
+  const pending = await getPendingRetries(5);
+  if (pending.length === 0) return;
+
+  console.log(`[Retry] Processing ${pending.length} failed submission(s)`);
+
+  for (const row of pending) {
+    try {
+      await submitLead(row.lead_data);
+      await resolveSubmission(row.id);
+      console.log(`[Retry] Submission ${row.id} succeeded on retry`);
+    } catch (err) {
+      console.error(`[Retry] Submission ${row.id} failed again: ${err.message}`);
+      await incrementRetryAttempt(row.id, row.attempts);
+    }
+  }
+}
+
 // ── Graceful shutdown ──────────────────────────────────────────
-function shutdown(signal) {
+async function shutdown(signal) {
   console.log(`[Server] ${signal} received — shutting down gracefully...`);
 
   if (server) {
-    server.close(() => {
+    server.close(async () => {
       console.log("[Server] HTTP server closed");
+      try {
+        await closePool();
+      } catch (err) {
+        console.error("[Server] Pool close error:", err.message);
+      }
       process.exit(0);
     });
 
@@ -199,6 +275,9 @@ function shutdown(signal) {
       process.exit(1);
     }, 10000);
   } else {
+    try {
+      await closePool();
+    } catch {}
     process.exit(0);
   }
 }
