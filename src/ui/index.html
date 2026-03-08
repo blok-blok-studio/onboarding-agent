@@ -7,82 +7,147 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <title>Onboarding Agent</title>
   <style>
-    :root {
-      --brand-color: #2563eb;
-    }
-
+    :root { --brand-color: #2563eb; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0a0a0a;
+      background: #050505;
+      color: #e5e5e5;
+      overflow-x: hidden;
+    }
+
+    /* ── Hero ─────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      padding: 60px 24px 80px;
     }
 
-    .chat-container {
+    .hero-inner {
+      max-width: 1200px;
       width: 100%;
-      max-width: 640px;
-      height: 100vh;
-      max-height: 780px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .hero-text h1 {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1.15;
+      color: #fff;
+      letter-spacing: -1px;
+    }
+
+    .hero-text h1 span { color: var(--brand-color); }
+
+    .hero-text p {
+      font-size: 18px;
+      color: #888;
+      line-height: 1.7;
+      margin-top: 20px;
+      max-width: 480px;
+    }
+
+    .hero-cta {
+      display: inline-block;
+      margin-top: 32px;
+      padding: 14px 32px;
+      background: var(--brand-color);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .hero-cta:hover { opacity: 0.9; }
+    .hero-cta:active { transform: scale(0.97); }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
       background: #111;
       border: 1px solid #222;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+
+    .hero-badge .dot {
+      width: 6px; height: 6px;
+      background: #4ade80;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(74,222,128,0.4);
+    }
+
+    /* ── Chat preview in hero ─────────────────────────── */
+    .hero-chat {
+      background: #111;
+      border: 1px solid #1f1f1f;
       border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      height: 560px;
     }
 
     .chat-header {
       background: #000;
-      padding: 20px 24px;
-      border-bottom: 1px solid #222;
+      padding: 16px 20px;
+      border-bottom: 1px solid #1f1f1f;
     }
 
-    .chat-header h1 {
-      font-size: 16px;
+    .chat-header h2 {
+      font-size: 14px;
       font-weight: 700;
       color: #fff;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
-    .chat-header p { font-size: 12px; color: #666; margin-top: 4px; }
+    .chat-header p { font-size: 11px; color: #555; margin-top: 2px; }
 
     .status-dot {
       display: inline-block;
-      width: 8px; height: 8px;
+      width: 7px; height: 7px;
       background: #4ade80;
       border-radius: 50%;
-      margin-right: 6px;
-      vertical-align: middle;
-      box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
+      box-shadow: 0 0 6px rgba(74,222,128,0.4);
     }
 
     .messages {
       flex: 1;
       overflow-y: auto;
-      padding: 24px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
       scroll-behavior: smooth;
     }
 
-    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar { width: 3px; }
     .messages::-webkit-scrollbar-track { background: transparent; }
     .messages::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
 
     .message {
-      max-width: 85%;
-      padding: 14px 18px;
-      border-radius: 16px;
-      font-size: 14px;
-      line-height: 1.65;
+      max-width: 88%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      line-height: 1.6;
       word-break: break-word;
       overflow-wrap: break-word;
       animation: fadeIn 0.3s ease;
@@ -90,7 +155,7 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
+      from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
@@ -112,20 +177,20 @@
     .message.system {
       background: transparent;
       color: #555;
-      font-size: 12px;
+      font-size: 11px;
       align-self: center;
       border: 1px solid #1f1f1f;
-      padding: 6px 14px;
+      padding: 5px 12px;
       border-radius: 20px;
     }
 
     .typing {
       display: none;
-      gap: 5px;
-      padding: 14px 18px;
+      gap: 4px;
+      padding: 10px 14px;
       background: #1a1a1a;
       border: 1px solid #252525;
-      border-radius: 16px;
+      border-radius: 14px;
       border-bottom-left-radius: 4px;
       width: fit-content;
       align-self: flex-start;
@@ -134,25 +199,24 @@
     .typing.show { display: flex; align-items: center; }
 
     .typing span {
-      width: 6px; height: 6px;
+      width: 5px; height: 5px;
       background: #555;
       border-radius: 50%;
       animation: bounce 1.2s infinite;
     }
-
     .typing span:nth-child(2) { animation-delay: .2s; }
     .typing span:nth-child(3) { animation-delay: .4s; }
 
     @keyframes bounce {
       0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-6px); }
+      30% { transform: translateY(-5px); }
     }
 
     .input-area {
-      padding: 16px 20px;
+      padding: 12px 14px;
       border-top: 1px solid #1a1a1a;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       background: #0d0d0d;
     }
 
@@ -161,14 +225,14 @@
       background: #1a1a1a;
       border: 1px solid #252525;
       color: #fff;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
       font-family: inherit;
       resize: none;
       outline: none;
-      line-height: 1.5;
-      max-height: 120px;
+      line-height: 1.4;
+      max-height: 80px;
       transition: border-color .2s;
     }
 
@@ -179,62 +243,253 @@
       background: var(--brand-color);
       color: #fff;
       border: none;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-size: 14px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       align-self: flex-end;
       transition: opacity .15s, transform .1s;
-      min-width: 70px;
+      min-width: 60px;
     }
 
     button#send:hover    { opacity: .9; }
     button#send:active   { transform: scale(0.97); }
     button#send:disabled { opacity: .3; cursor: default; transform: none; }
 
-    .footer {
-      text-align: center;
-      font-size: 11px;
-      color: #2a2a2a;
-      padding: 10px;
-      background: #0a0a0a;
+    /* ── Features section ─────────────────────────────── */
+    .features {
+      padding: 80px 24px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    .footer a { color: #3a3a3a; text-decoration: none; }
-    .footer a:hover { color: #555; }
+    .features h2 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 12px;
+    }
 
-    @media (max-width: 680px) {
-      .chat-container {
-        max-height: 100vh;
-        border-radius: 0;
-        border: none;
+    .features > p {
+      text-align: center;
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 48px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 14px;
+      padding: 28px 24px;
+      transition: border-color 0.2s;
+    }
+
+    .feature-card:hover { border-color: #2a2a2a; }
+
+    .feature-card .icon {
+      width: 42px; height: 42px;
+      background: rgba(37,99,235,0.1);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .feature-card p {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    /* ── Embed section ────────────────────────────────── */
+    .embed-section {
+      padding: 60px 24px 80px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .embed-section h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .embed-section > p {
+      color: #666;
+      font-size: 15px;
+      margin-bottom: 28px;
+    }
+
+    .code-block {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 12px;
+      padding: 20px 24px;
+      text-align: left;
+      overflow-x: auto;
+    }
+
+    .code-block code {
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+      font-size: 13px;
+      color: #4ade80;
+      line-height: 1.8;
+    }
+
+    .code-block .comment { color: #555; }
+    .code-block .attr { color: #f59e0b; }
+    .code-block .tag { color: #60a5fa; }
+
+    /* ── Footer ───────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: #333;
+      border-top: 1px solid #111;
+    }
+
+    .footer a { color: #444; text-decoration: none; }
+    .footer a:hover { color: #666; }
+
+    /* ── Responsive ───────────────────────────────────── */
+    @media (max-width: 900px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        text-align: center;
       }
-      body { background: #111; }
+      .hero-text p { margin-left: auto; margin-right: auto; }
+      .hero-chat { height: 480px; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      .hero-text h1 { font-size: 32px; }
+      .hero-text p { font-size: 15px; }
+      .hero-chat { height: 420px; }
+      .features-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="chat-container">
-    <div class="chat-header">
-      <h1 id="brand-name">Loading...</h1>
-      <p><span class="status-dot"></span><span id="agent-role">Online</span></p>
-    </div>
 
-    <div class="messages" id="messages">
-      <div class="typing" id="typing">
-        <span></span><span></span><span></span>
+  <!-- ── Hero ───────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          AI Agent Online
+        </div>
+        <h1 id="hero-headline">
+          Turn Visitors Into <span>Qualified Leads</span> — Automatically
+        </h1>
+        <p id="hero-sub">
+          An AI-powered conversational agent that engages your website visitors 24/7,
+          qualifies them in real-time, and sends warm leads straight to your CRM.
+        </p>
+        <a href="#chat-section" class="hero-cta">Try the Demo</a>
+      </div>
+
+      <!-- Live chat preview -->
+      <div class="hero-chat" id="chat-section">
+        <div class="chat-header">
+          <h2 id="brand-name">Loading...</h2>
+          <p><span class="status-dot"></span><span id="agent-role">Online</span></p>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="typing" id="typing">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="input-area">
+          <textarea id="input" placeholder="Type a message..." rows="1" maxlength="2000"></textarea>
+          <button id="send">Send</button>
+        </div>
       </div>
     </div>
+  </section>
 
-    <div class="input-area">
-      <textarea id="input" placeholder="Type a message..." rows="1" maxlength="2000"></textarea>
-      <button id="send">Send</button>
-    </div>
+  <!-- ── Features ───────────────────────────────────── -->
+  <section class="features">
+    <h2>Why an AI Agent Beats a Contact Form</h2>
+    <p>Forms collect data. Agents build relationships.</p>
 
-    <div class="footer">
-      Powered by <a href="https://blokblokstudio.com" target="_blank" rel="noopener noreferrer">Blok Blok Studio</a>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">&#128172;</div>
+        <h3>Conversational Intake</h3>
+        <p>Collects information through natural dialogue — not cold forms. Prospects share more because it feels like a real conversation.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#9989;</div>
+        <h3>Auto-Qualification</h3>
+        <p>Screens prospects in real-time using your custom criteria. Only qualified leads reach your team.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#9203;</div>
+        <h3>Always On</h3>
+        <p>Works 24/7, 365 days a year. Never calls in sick, never takes a break, never misses a lead.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#128279;</div>
+        <h3>CRM Integration</h3>
+        <p>Sends qualified leads directly to HubSpot, Salesforce, Pipedrive, Airtable, or any CRM via webhook.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#128274;</div>
+        <h3>Enterprise Security</h3>
+        <p>Rate limiting, input validation, PII masking, webhook signing, and hardened API endpoints out of the box.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">&#128187;</div>
+        <h3>One-Line Embed</h3>
+        <p>Add the floating chat widget to any website with a single script tag. Works everywhere — Webflow, WordPress, custom sites.</p>
+      </div>
     </div>
+  </section>
+
+  <!-- ── Embed Code ─────────────────────────────────── -->
+  <section class="embed-section">
+    <h2>Add to Any Website</h2>
+    <p>One script tag. That's it.</p>
+    <div class="code-block">
+      <code>
+        <span class="comment">&lt;!-- Paste before &lt;/body&gt; --&gt;</span><br>
+        <span class="tag">&lt;script</span>
+          <span class="attr"> src</span>=<span style="color:#4ade80">"https://your-agent.com/widget.js"</span><br>
+          <span class="attr">&nbsp;&nbsp;data-greeting</span>=<span style="color:#4ade80">"Need help? Let's chat!"</span><br>
+          <span class="attr">&nbsp;&nbsp;data-position</span>=<span style="color:#4ade80">"right"</span><span class="tag">&gt;&lt;/script&gt;</span>
+      </code>
+    </div>
+  </section>
+
+  <!-- ── Footer ─────────────────────────────────────── -->
+  <div class="footer">
+    Powered by <a href="https://blokblokstudio.com" target="_blank" rel="noopener noreferrer">Blok Blok Studio</a>
   </div>
 
   <script>
@@ -251,7 +506,6 @@
     var sendBtn    = document.getElementById("send");
     var typingEl   = document.getElementById("typing");
 
-    // XSS-safe message rendering — always uses textContent, never innerHTML
     function addMessage(role, text) {
       var safeRole = ["assistant", "user", "system"].indexOf(role) !== -1 ? role : "system";
       var div = document.createElement("div");
@@ -274,7 +528,7 @@
       done = true;
       sendBtn.disabled = true;
       inputEl.disabled = true;
-      inputEl.placeholder = "Conversation complete. Refresh to start a new one.";
+      inputEl.placeholder = "Conversation complete.";
     }
 
     async function send() {
@@ -310,12 +564,10 @@
         setBusy(false);
         addMessage("assistant", data.reply);
 
-        if (data.done) {
-          handleDone();
-        }
+        if (data.done) handleDone();
       } catch (e) {
         setBusy(false);
-        addMessage("system", "Connection error \u2014 please refresh.");
+        addMessage("system", "Connection error \u2014 please try again.");
       }
     }
 
@@ -325,26 +577,28 @@
     });
     inputEl.addEventListener("input", function() {
       inputEl.style.height = "auto";
-      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 80) + "px";
     });
 
-    // Load branding + get instant greeting
+    // Smooth scroll for CTA
+    document.querySelector(".hero-cta").addEventListener("click", function(e) {
+      e.preventDefault();
+      document.getElementById("chat-section").scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(function() { inputEl.focus(); }, 600);
+    });
+
     async function init() {
-      // Load config for branding
       try {
         var r = await fetch(API + "/api/config");
         var cfg = await r.json();
-        document.title = cfg.brandName;
+        document.title = cfg.brandName + " \u2014 AI Onboarding Agent";
         document.getElementById("brand-name").textContent = cfg.brandName;
         document.getElementById("agent-role").textContent = cfg.agentName + " \u00B7 " + cfg.agentRole;
-
-        // Apply brand color if configured
         if (cfg.primaryColor) {
           document.documentElement.style.setProperty("--brand-color", cfg.primaryColor);
         }
-      } catch (e) { /* use defaults */ }
+      } catch (e) {}
 
-      // Get instant greeting from /api/start (no Claude API call needed)
       try {
         var r2 = await fetch(API + "/api/start", {
           method: "POST",

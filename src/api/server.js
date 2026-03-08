@@ -35,7 +35,7 @@ applySecurityMiddleware(app);
 // ── CORS ───────────────────────────────────────────────────────
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map(o => o.trim()).filter(Boolean);
 app.use(cors({
-  origin: allowedOrigins?.length ? allowedOrigins : false,
+  origin: allowedOrigins?.length ? allowedOrigins : true,
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type"],
   maxAge: 86400,
@@ -284,3 +284,6 @@ async function shutdown(signal) {
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));
 process.on("SIGINT", () => shutdown("SIGINT"));
+
+// ── Export for Vercel serverless ──────────────────────────────────
+module.exports = app;

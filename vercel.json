@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/api/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    { "src": "/api/(.*)", "dest": "src/api/server.js" },
+    { "src": "/widget\\.js", "dest": "src/ui/widget.js" },
+    { "src": "/widget-chat\\.html", "dest": "src/ui/widget-chat.html" },
+    { "src": "/(.*\\.(html|css|js|ico|png|jpg|svg))", "dest": "src/ui/$1" },
+    { "src": "/(.*)", "dest": "src/api/server.js" }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
