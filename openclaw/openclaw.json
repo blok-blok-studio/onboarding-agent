@@ -1,0 +1,130 @@
+{
+  // ─────────────────────────────────────────────────────────────
+  // OpenClaw Configuration — Onboarding Agent
+  // by Blok Blok Studio
+  //
+  // This config runs the onboarding agent 24/7 across all
+  // connected channels (WhatsApp, Telegram, Discord, Slack, etc.)
+  // ─────────────────────────────────────────────────────────────
+
+  "identity": {
+    "name": "OnboardingAgent",
+    "theme": "a professional, warm onboarding specialist who guides new users through intake and qualification",
+    "emoji": "🤝"
+  },
+
+  // ── Model ────────────────────────────────────────────────────
+  "agent": {
+    "workspace": "./workspace",
+    "model": {
+      "primary": "anthropic/claude-sonnet-4-6",
+      "fallbacks": ["anthropic/claude-haiku-4-5"]
+    },
+    "heartbeat": {
+      "every": "30m"
+    }
+  },
+
+  // ── Channels ─────────────────────────────────────────────────
+  // Uncomment and configure the channels you want to activate.
+  // The agent will handle onboarding conversations on any
+  // connected channel automatically.
+  "channels": {
+    // WhatsApp — most common for client onboarding
+    // "whatsapp": {
+    //   "dmPolicy": "open",
+    //   "allowFrom": ["*"],
+    //   "groupPolicy": "mention",
+    //   "textChunkLimit": 4000,
+    //   "mediaMaxMb": 50
+    // },
+
+    // Telegram
+    // "telegram": {
+    //   "botToken": "${TELEGRAM_BOT_TOKEN}",
+    //   "dmPolicy": "open",
+    //   "groupPolicy": "mention",
+    //   "streamMode": "partial"
+    // },
+
+    // Discord
+    // "discord": {
+    //   "botToken": "${DISCORD_BOT_TOKEN}",
+    //   "applicationId": "${DISCORD_APP_ID}"
+    // },
+
+    // Slack
+    // "slack": {
+    //   "botToken": "${SLACK_BOT_TOKEN}",
+    //   "appToken": "${SLACK_APP_TOKEN}",
+    //   "signingSecret": "${SLACK_SIGNING_SECRET}"
+    // },
+
+    // Signal
+    // "signal": {
+    //   "dmPolicy": "open"
+    // },
+
+    // iMessage
+    // "imessage": {
+    //   "dmPolicy": "open"
+    // }
+  },
+
+  // ── Session Management ──────────────────────────────────────
+  "session": {
+    "scope": "per-sender",
+    "dmScope": "per-channel-peer",
+    "reset": "idle",
+    "idleMinutes": 120
+  },
+
+  // ── Tools ───────────────────────────────────────────────────
+  "tools": {
+    "allow": ["exec", "read", "write", "edit"],
+    "deny": ["browser", "canvas"],
+    "exec": {
+      "backgroundMs": 10000,
+      "timeoutSec": 300
+    },
+    "web": {
+      "search": {
+        "provider": "brave"
+      }
+    }
+  },
+
+  // ── Skills ──────────────────────────────────────────────────
+  "skills": {
+    "entries": {
+      "onboarding": {
+        "enabled": true
+      }
+    },
+    "load": {
+      "watch": true,
+      "watchDebounceMs": 250
+    }
+  },
+
+  // ── Gateway (24/7 daemon) ───────────────────────────────────
+  "gateway": {
+    "mode": "local",
+    "port": 18789,
+    "bind": "loopback"
+  },
+
+  // ── Logging ─────────────────────────────────────────────────
+  "logging": {
+    "level": "info",
+    "consoleStyle": "pretty"
+  },
+
+  // ── Environment ─────────────────────────────────────────────
+  // API keys loaded from .env file
+  "env": {
+    "shellEnv": {
+      "enabled": true
+    }
+  }
+}

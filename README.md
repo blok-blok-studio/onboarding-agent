@@ -15,6 +15,7 @@ src/db/                <- Session storage (PostgreSQL)
 src/api/               <- Express server (hardened)
 src/security/          <- Security middleware, validation, HMAC signing
 src/ui/                <- Chat widget (XSS-safe)
+openclaw/              <- OpenClaw 24/7 config (SOUL, skills, heartbeat)
 ```
 
 The entire agent — persona, qualification rules, intake fields, FAQ, and tone — is driven by `config/client.js`. The engine reads it at runtime.
@@ -64,11 +65,25 @@ See [SECURITY.md](SECURITY.md) for the full security guide.
 
 ---
 
+## 24/7 Operation with OpenClaw
+
+Run the agent around the clock across **all messaging channels** using [OpenClaw](https://openclaw.ai):
+
+```bash
+./openclaw/setup.sh              # Configure workspace
+openclaw onboard --install-daemon # Start 24/7 daemon
+```
+
+Supports WhatsApp, Telegram, Discord, Slack, Signal, iMessage, and the web widget simultaneously. See [OPENCLAW.md](OPENCLAW.md) for the full setup guide.
+
+---
+
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
 | [CLAUDE.md](CLAUDE.md) | Project overview for AI assistants |
+| [OPENCLAW.md](OPENCLAW.md) | OpenClaw 24/7 deployment + multi-channel setup |
 | [SECURITY.md](SECURITY.md) | Security architecture and production checklist |
 | [API.md](API.md) | API reference for all endpoints |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Railway, Docker, and VPS deployment guides |
@@ -104,6 +119,20 @@ onboarding-agent/
 │   │   └── webhook.js         <- HMAC-SHA256 signing & verification
 │   └── ui/
 │       └── index.html         <- Chat widget (pulls branding from /api/config)
+├── openclaw/
+│   ├── openclaw.json          <- OpenClaw daemon configuration
+│   ├── setup.sh               <- One-command OpenClaw setup
+│   ├── .env.example           <- Channel tokens and API keys
+│   └── workspace/
+│       ├── SOUL.md            <- Agent persona and onboarding flow
+│       ├── IDENTITY.md        <- Display name and greeting
+│       ├── HEARTBEAT.md       <- Proactive health checks (every 30 min)
+│       ├── TOOLS.md           <- Capability declarations
+│       ├── USER.md            <- Operator context
+│       ├── MEMORY.md          <- Persistent memory index
+│       └── skills/
+│           └── onboarding/
+│               └── SKILL.md   <- Core onboarding skill
 ├── .env.example
 ├── .gitignore
 └── README.md
