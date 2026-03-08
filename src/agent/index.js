@@ -10,7 +10,7 @@ const { isValidEmailFormat } = require("../utils/fetch");
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const MODEL = process.env.CLAUDE_MODEL || "claude-sonnet-4-6";
+const MODEL = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
 const CLAUDE_TIMEOUT_MS = 60000; // 60s max per API call
