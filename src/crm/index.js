@@ -1,14 +1,39 @@
 // src/crm/index.js
 // Generic CRM adapter. All agent logic calls these functions.
-// Swap the implementation below without touching anything else.
+// Set CRM_ADAPTER env var to switch between adapters without changing code.
 //
-// Current implementation: HubSpot
-// To switch CRM: change the require() below to your adapter.
+// Supported adapters: hubspot, salesforce, pipedrive, zoho, airtable, webhook-only
+// Custom adapters: create src/crm/adapters/your-crm.js (see _template.js)
 
-const adapter = require("./adapters/hubspot");
-// const adapter = require("./adapters/salesforce");
-// const adapter = require("./adapters/airtable");
-// const adapter = require("./adapters/webhook-only");
+const ADAPTER_NAME = (process.env.CRM_ADAPTER || "webhook-only").toLowerCase().trim();
+const VALID_ADAPTERS = ["hubspot", "salesforce", "pipedrive", "zoho", "airtable", "webhook-only"];
+
+if (!VALID_ADAPTERS.includes(ADAPTER_NAME)) {
+  // Allow custom adapters — just try to require the file
+  console.warn(`[CRM] Custom adapter: "${ADAPTER_NAME}" — loading from ./adapters/${ADAPTER_NAME}`);
+}
+
+let adapter;
+try {
+  adapter = require(`./adapters/${ADAPTER_NAME}`);
+} catch (err) {
+  console.error(`[CRM] Failed to load adapter "${ADAPTER_NAME}": ${err.message}`);
+  console.error(`[CRM] Valid adapters: ${VALID_ADAPTERS.join(", ")}`);
+  console.error(`[CRM] Or create a custom adapter at src/crm/adapters/${ADAPTER_NAME}.js`);
+  process.exit(1);
+}
+
+// Validate adapter interface
+const REQUIRED_METHODS = ["createContact", "logDisqualified"];
+for (const method of REQUIRED_METHODS) {
+  if (typeof adapter[method] !== "function") {
+    console.error(`[CRM] Adapter "${ADAPTER_NAME}" is missing required method: ${method}()`);
+    console.error(`[CRM] See src/crm/adapters/_template.js for the required interface.`);
+    process.exit(1);
+  }
+}
+
+console.log(`[CRM] Adapter loaded: ${ADAPTER_NAME}`);
 
 const clientConfig = require("../../config/client");
 const { signPayload } = require("../security/webhook");
