@@ -133,8 +133,8 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
     res.json({ sessionId, reply, done });
 
   } catch (err) {
-    console.error("[/api/chat]", err.message, err.stack);
-    res.status(500).json({ error: "Something went wrong. Please try again.", _debug: `${err.name}: ${err.message}`, _status: err.status || err.statusCode || null });
+    console.error("[/api/chat]", err.message);
+    res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });
 
