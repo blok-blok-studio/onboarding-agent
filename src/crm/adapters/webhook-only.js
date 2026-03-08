@@ -4,11 +4,15 @@
 
 async function createContact(data) {
   console.log("[CRM: webhook-only] Lead:", data);
-  return { logged: true };
+  return { skipped: true };
 }
 
 async function logDisqualified(data) {
   console.log("[CRM: webhook-only] Disqualified:", data);
 }
 
-module.exports = { createContact, logDisqualified };
+async function testConnection() {
+  return { connected: true, reason: "webhook-only adapter (no CRM)" };
+}
+
+module.exports = { createContact, logDisqualified, testConnection };

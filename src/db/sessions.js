@@ -5,7 +5,7 @@ const { Pool } = require("pg");
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 10,
+  max: parseInt(process.env.DB_POOL_MAX || "10", 10),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
   ssl: process.env.NODE_ENV === "production"
@@ -28,7 +28,23 @@ async function initDb() {
     CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
   `).catch(() => {});
 
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at);
+  `).catch(() => {});
+
   console.log("[DB] Ready");
+}
+
+/**
+ * Check database connectivity. Returns true if healthy.
+ */
+async function checkDb() {
+  try {
+    await pool.query("SELECT 1");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function getSession(sessionId) {
@@ -64,4 +80,20 @@ async function closeSession(sessionId, status = "complete") {
   );
 }
 
-module.exports = { initDb, getSession, getMessages, appendMessage, closeSession };
+/**
+ * Delete sessions older than the given number of days.
+ * Returns the number of deleted rows.
+ */
+async function cleanupOldSessions(ttlDays = 30) {
+  const result = await pool.query(
+    "DELETE FROM sessions WHERE updated_at < NOW() - INTERVAL '1 day' * $1",
+    [ttlDays]
+  );
+  const count = result.rowCount;
+  if (count > 0) {
+    console.log(`[Cleanup] Deleted ${count} sessions older than ${ttlDays} days`);
+  }
+  return count;
+}
+
+module.exports = { initDb, checkDb, getSession, getMessages, appendMessage, closeSession, cleanupOldSessions };

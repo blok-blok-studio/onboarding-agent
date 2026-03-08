@@ -8,22 +8,27 @@ const path    = require("path");
 const { v4: uuidv4 } = require("uuid");
 
 const { chat }           = require("../agent");
-const { initDb, getMessages, appendMessage, closeSession, getSession } = require("../db/sessions");
+const { initDb, getMessages, appendMessage, closeSession, getSession, cleanupOldSessions, checkDb } = require("../db/sessions");
 const clientConfig        = require("../../config/client");
 const { applySecurityMiddleware, chatLimiter } = require("../security/middleware");
 const { validateChatInput } = require("../security/validate");
 const { validateEnv }     = require("../security/env");
+const { validateConfig }  = require("../security/config");
 
-// ── Validate environment before anything else ──────────────────
+// ── Validate environment and config before anything else ───────
 validateEnv();
+validateConfig(clientConfig);
 
 const app = express();
+
+// ── Trust proxy (required for rate limiting behind Railway/nginx)
+app.set("trust proxy", 1);
 
 // ── Security middleware ────────────────────────────────────────
 applySecurityMiddleware(app);
 
 // ── CORS ───────────────────────────────────────────────────────
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map(o => o.trim());
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map(o => o.trim()).filter(Boolean);
 app.use(cors({
   origin: allowedOrigins?.length ? allowedOrigins : false,
   methods: ["GET", "POST"],
@@ -89,14 +94,12 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
 });
 
 // ── POST /api/start ──────────────────────────────────────────
-// Start a new session and get the greeting without a user message.
-// The UI calls this on load for instant greeting.
+// Start a new session and get the greeting without a Claude API call.
 app.post("/api/start", chatLimiter, async (req, res) => {
   try {
     const sessionId = uuidv4();
     const greeting = clientConfig.agent.greeting;
 
-    // Store the greeting as the first assistant message
     await appendMessage(sessionId, { role: "assistant", content: greeting });
 
     res.json({ sessionId, reply: greeting, done: false });
@@ -109,19 +112,39 @@ app.post("/api/start", chatLimiter, async (req, res) => {
 // ── GET /api/config ────────────────────────────────────────────
 // Public branding info for the UI — no sensitive data exposed.
 app.get("/api/config", (_req, res) => {
+  // Validate color format to prevent CSS injection
+  let primaryColor = clientConfig.brand.primaryColor || null;
+  if (primaryColor && !/^#[0-9a-fA-F]{3,8}$/.test(primaryColor)) {
+    primaryColor = null;
+  }
+
   res.json({
     brandName:    clientConfig.brand.name,
     brandTagline: clientConfig.brand.tagline || "",
     agentName:    clientConfig.agent.name,
     agentRole:    clientConfig.agent.role,
-    primaryColor: clientConfig.brand.primaryColor || null,
+    primaryColor,
   });
 });
 
 // ── GET /api/health ────────────────────────────────────────────
-// No sensitive info leaked — just status and timestamp.
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", ts: new Date().toISOString() });
+// Checks actual dependency health — DB connectivity.
+app.get("/api/health", async (_req, res) => {
+  const dbOk = await checkDb();
+
+  if (!dbOk) {
+    return res.status(503).json({
+      status: "degraded",
+      db: "disconnected",
+      ts: new Date().toISOString(),
+    });
+  }
+
+  res.json({
+    status: "ok",
+    db: "connected",
+    ts: new Date().toISOString(),
+  });
 });
 
 // ── 404 handler ────────────────────────────────────────────────
@@ -137,15 +160,48 @@ app.use((err, _req, res, _next) => {
 
 // ── Start ──────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
+let server;
 
 initDb().then(() => {
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     console.log(`[${clientConfig.brand.name}] Onboarding Agent on port ${PORT}`);
     if (process.env.NODE_ENV !== "production") {
       console.log(`[Dev] http://localhost:${PORT}`);
     }
   });
+
+  // Session cleanup — run every hour, delete sessions older than 30 days
+  const CLEANUP_INTERVAL = 60 * 60 * 1000;
+  const SESSION_TTL_DAYS = parseInt(process.env.SESSION_TTL_DAYS || "30", 10);
+  setInterval(() => {
+    cleanupOldSessions(SESSION_TTL_DAYS)
+      .catch(err => console.error("[Cleanup] Error:", err.message));
+  }, CLEANUP_INTERVAL);
+
 }).catch(err => {
   console.error("[DB] Init failed:", err.message);
   process.exit(1);
 });
+
+// ── Graceful shutdown ──────────────────────────────────────────
+function shutdown(signal) {
+  console.log(`[Server] ${signal} received — shutting down gracefully...`);
+
+  if (server) {
+    server.close(() => {
+      console.log("[Server] HTTP server closed");
+      process.exit(0);
+    });
+
+    // Force exit after 10 seconds if connections don't drain
+    setTimeout(() => {
+      console.error("[Server] Forced shutdown after timeout");
+      process.exit(1);
+    }, 10000);
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
