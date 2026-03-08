@@ -71,80 +71,98 @@ module.exports = {
     ],
   },
 
-  // ── FAQ / Knowledge Base ──────────────────────────────────
-  // This is the agent's entire brain. Write it like you're
-  // briefing a sharp new employee on their first day.
-  // The more detail here, the fewer escalations.
-  faq: `
-    ## About Us
+  // ── Company Info ─────────────────────────────────────────
+  // Tell the agent everything about the company. This is its
+  // entire brain. When someone asks "what do you do?" or
+  // "how much does it cost?", the agent answers from here.
+  //
+  // Write it like you're briefing a sharp new hire on day one.
+  // The more detail, the fewer escalations.
+  companyInfo: `
+    ABOUT THE COMPANY:
     Apex Solutions is a modern consulting firm that helps growing businesses
     streamline operations, improve their customer experience, and scale
-    sustainably. We work with companies across industries — from tech startups
+    sustainably. We work with companies across industries, from tech startups
     to established service businesses.
 
-    ## What We Do
-    - **Strategy & Growth**: Market analysis, go-to-market planning, growth roadmaps
-    - **Operations**: Process optimization, workflow automation, team structure
-    - **Technology**: Software selection, integration, AI/automation implementation
-    - **Customer Experience**: Journey mapping, support systems, retention strategy
+    WHAT WE DO:
+    Strategy and Growth: market analysis, go-to-market planning, growth roadmaps.
+    Operations: process optimization, workflow automation, team structure.
+    Technology: software selection, integration, AI and automation implementation.
+    Customer Experience: journey mapping, support systems, retention strategy.
 
-    ## How It Works
-    1. **Discovery Call** — A 30-minute call to understand your situation (free, no obligation)
-    2. **Assessment** — We review your business and identify the highest-impact opportunities
-    3. **Proposal** — A clear scope, timeline, and investment for the recommended engagement
-    4. **Execution** — We work alongside your team to implement the plan
-    5. **Review** — Ongoing check-ins to measure results and adjust as needed
+    HOW IT WORKS:
+    First we do a free 30-minute discovery call to understand the situation.
+    Then we run an assessment to find the highest-impact opportunities.
+    We put together a clear proposal with scope, timeline, and pricing.
+    Then we execute alongside the team and do ongoing check-ins.
 
-    ## Pricing
-    - We offer project-based and retainer engagements
-    - Discovery calls are always free
-    - Project pricing depends on scope — typically ranges from $5,000 to $50,000+
-    - Monthly retainers start at $2,500/month
-    - We're happy to discuss budget during the discovery call and find a fit
+    PRICING:
+    Discovery calls are always free.
+    We do project-based and retainer engagements.
+    Projects typically range from $5,000 to $50,000+ depending on scope.
+    Monthly retainers start at $2,500/month.
+    Budget is something we figure out together on the discovery call.
 
-    ## Timeline
-    - Discovery calls can usually be scheduled within 2-3 business days
-    - Assessments take 1-2 weeks depending on complexity
-    - Most projects run 4-12 weeks
-    - Retainers are month-to-month with 30-day notice
+    TIMELINE:
+    Discovery calls can usually be scheduled within 2-3 business days.
+    Assessments take 1-2 weeks depending on complexity.
+    Most projects run 4-12 weeks.
+    Retainers are month-to-month with 30-day notice.
 
-    ## What to Expect After Submitting
-    After you share your information:
-    1. A team member will review your details within 1 business day
-    2. You'll receive an email to schedule your free discovery call
-    3. No pressure, no obligation — the call is simply to see if we're a good fit
+    AFTER THEY SUBMIT:
+    Someone from the team reviews their details within 1 business day.
+    They get an email to schedule the free discovery call.
+    No pressure, no obligation.
 
-    ## Common Questions
+    INDUSTRIES:
+    We're industry-agnostic. We've worked with SaaS, e-commerce, healthcare,
+    professional services, real estate, manufacturing, and more.
 
-    Q: Do you work with small businesses?
-    A: Absolutely. We work with businesses at every stage — from solo founders
-       to companies with 500+ employees. Our approach scales to your needs.
+    LOCATION:
+    We work with clients globally. Most engagements are remote.
 
-    Q: Do you work with businesses outside the US?
-    A: Yes, we work with clients globally. Most of our engagements are remote.
+    TEAM SIZE WE WORK WITH:
+    Businesses at every stage, from solo founders to 500+ employees.
+  `,
+
+  // ── Common Questions ────────────────────────────────────
+  // Q&A pairs the agent can reference. Write the answers the
+  // way you'd want the agent to say them (casual, no lists).
+  faq: `
+    Q: How much does it cost?
+    A: It depends on the scope. Projects usually run $5k to $50k+, retainers
+       start at $2,500/mo. But honestly the discovery call is the best way
+       to figure out what makes sense for your budget.
 
     Q: Can I talk to a real person?
-    A: Of course! That's exactly what the discovery call is for. I'll collect
-       a bit of info so the right person on our team can prepare for the call.
+    A: For sure, that's what the discovery call is for. I just need to grab
+       some info first so the right person on the team can prepare.
 
     Q: What if I'm not sure what I need?
-    A: That's perfectly fine — most people aren't when they first reach out.
-       The discovery call is designed to help clarify your priorities.
+    A: Totally fine, most people aren't when they first reach out. That's
+       literally what the discovery call is for.
 
     Q: Is there a contract or commitment?
-    A: Projects have a defined scope. Retainers are month-to-month.
+    A: Projects have a defined scope and retainers are month-to-month.
        No long-term lock-ins.
 
-    Q: What industries do you work with?
-    A: We're industry-agnostic. We've worked with SaaS, e-commerce, healthcare,
-       professional services, real estate, manufacturing, and more.
+    Q: Do you work with small businesses?
+    A: Yeah, we work with businesses at every stage. Solo founders,
+       small teams, bigger companies. Our approach scales.
 
-    ## What NOT to Say
-    - Never guarantee specific results (revenue numbers, timelines, etc.)
-    - Never commit to pricing without the team reviewing first
-    - Never claim expertise in a specific industry unless listed above
-    - Never share other clients' information or case study details
-    - Never schedule calls or make calendar commitments — the team handles that
+    Q: How long does a typical project take?
+    A: Most projects run 4-12 weeks depending on complexity. We can
+       talk specifics on the discovery call.
+  `,
+
+  // ── Things the Agent Should Never Do ────────────────────
+  guardrails: `
+    Never guarantee specific results like revenue numbers or timelines.
+    Never commit to pricing without the team reviewing first.
+    Never share other clients' info or case study details.
+    Never schedule calls or make calendar commitments, the team handles that.
+    Never claim expertise in an industry unless it's listed in the company info.
   `,
 
   // ── Tone & Constraints ────────────────────────────────────
@@ -173,11 +191,49 @@ module.exports = {
   `,
 
   // ── Post-Submission ───────────────────────────────────────
-  successMessage: `Thank you so much! I've sent your information to our team. Here's what happens next:\n\n1. A team member will review your details within 1 business day\n2. You'll receive an email to schedule your free discovery call\n3. The call is 30 minutes — no pressure, no obligation\n\nWe're looking forward to learning more about your business. If you have any other questions in the meantime, feel free to ask!`,
+  successMessage: `You're all set! I've passed your info along to the team. Someone will reach out within a business day to get your free discovery call scheduled. It's a quick 30 minute chat, no pressure at all. If you think of anything else in the meantime, feel free to ask.`,
 
-  // ── Notifications ─────────────────────────────────────────
-  notifications: {
-    notifyEmail: process.env.NOTIFICATION_EMAIL || null,
+  // ── Email Automations ────────────────────────────────────
+  // Requires RESEND_API_KEY env var. All emails are optional.
+  emails: {
+    // Email sent to the lead after they submit their info
+    leadConfirmation: {
+      enabled: true,
+      subject: "We got your info — next steps from Apex Solutions",
+      body: `Hey {{name}},
+
+Thanks for chatting with us. We've got your details and someone from the team will be reaching out within one business day to schedule your free discovery call.
+
+The call is about 30 minutes, totally casual, and there's zero obligation. We just want to see if we can help.
+
+If anything comes up before then, just reply to this email.
+
+Talk soon,
+The Apex Solutions Team`,
+    },
+
+    // Email sent to the team when a new lead comes in
+    teamNotification: {
+      enabled: true,
+      to: process.env.NOTIFICATION_EMAIL || null,
+      subject: "New lead: {{name}} from {{company}}",
+      body: `New qualified lead just came through the onboarding agent.
+
+Name: {{name}}
+Email: {{email}}
+Company: {{company}}
+Challenge: {{challenge}}
+
+{{#if phone}}Phone: {{phone}}{{/if}}
+{{#if timeline}}Timeline: {{timeline}}{{/if}}
+{{#if budget}}Budget: {{budget}}{{/if}}
+{{#if notes}}Notes: {{notes}}{{/if}}
+
+View in your CRM or reply to schedule the discovery call.`,
+    },
+
+    // From address for all outgoing emails
+    from: process.env.NOTIFICATION_FROM_EMAIL || "onboarding@blokblokstudio.com",
   },
 
   // ── Webhook ───────────────────────────────────────────────

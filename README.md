@@ -171,4 +171,6 @@ Or share the URL directly in emails, LinkedIn, etc.
 
 ---
 
+MIT License -- see [LICENSE](LICENSE) for details.
+
 Built by [Blok Blok Studio](https://blokblokstudio.com) — chase@blokblokstudio.com

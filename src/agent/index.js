@@ -7,6 +7,7 @@ const { buildTools } = require("./tools");
 const { submitLead, logDisqualified, escalateToHuman } = require("../crm");
 const clientConfig = require("../../config/client");
 const { isValidEmailFormat } = require("../utils/fetch");
+const { sendLeadEmails } = require("../notifications/email");
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -52,6 +53,11 @@ async function chat(messages, sessionId) {
           toolResult = { success: true, contactId: result.contactId || null };
           reply = clientConfig.successMessage;
           done = true;
+
+          // Fire email automations in background (don't block response)
+          sendLeadEmails(toolInput).catch(err =>
+            console.error(`[${sessionId}] Email automation error:`, err.message)
+          );
           break;
         }
         case "log_disqualified": {

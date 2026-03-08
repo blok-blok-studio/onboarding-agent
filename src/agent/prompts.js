@@ -5,7 +5,7 @@
 const client = require("../../config/client");
 
 function buildSystemPrompt() {
-  const { agent, qualification, intake, faq, tone } = client;
+  const { agent, qualification, intake, companyInfo, faq, guardrails, tone } = client;
 
   const requiredFields = intake.fields.filter(f => f.required);
   const optionalFields = intake.fields.filter(f => !f.required);
@@ -93,8 +93,14 @@ ${optionalList || "None"}
   "Just to make sure I have everything right — [brief summary]. Does that all look good?"
 - If they correct anything, update and re-confirm.
 
-## FAQ / Knowledge Base
+## Company Knowledge Base
+${companyInfo || "No company info provided."}
+
+## FAQ / Common Questions
 ${faq}
+
+## Guardrails (Things You Must NEVER Do)
+${guardrails || "None specified."}
 
 ## Tone & Style
 ${tone}
