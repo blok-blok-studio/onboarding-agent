@@ -3,7 +3,6 @@
 
 const REQUIRED_VARS = [
   "ANTHROPIC_API_KEY",
-  "DATABASE_URL",
 ];
 
 const OPTIONAL_VARS = [
@@ -64,10 +63,14 @@ function validateEnv() {
     console.warn("[Security] ANTHROPIC_API_KEY does not match expected format (sk-ant-...)");
   }
 
-  // Validate DATABASE_URL format
+  // Validate DATABASE_URL format (optional — in-memory store used when absent)
   const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl.startsWith("postgresql://") && !dbUrl.startsWith("postgres://")) {
-    throw new Error("DATABASE_URL must be a valid PostgreSQL connection string");
+  if (dbUrl) {
+    if (!dbUrl.startsWith("postgresql://") && !dbUrl.startsWith("postgres://")) {
+      throw new Error("DATABASE_URL must be a valid PostgreSQL connection string");
+    }
+  } else {
+    console.warn("[Security] DATABASE_URL not set — using in-memory session store (data lost on restart).");
   }
 
   // Warn about security-relevant missing optional vars
