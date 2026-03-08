@@ -204,35 +204,40 @@ app.use((err, _req, res, _next) => {
 });
 
 // ── Start ──────────────────────────────────────────────────────
+const IS_VERCEL = !!process.env.VERCEL;
 const PORT = process.env.PORT || 3000;
 let server;
+let dbReady = false;
 
-initDb().then(() => {
-  server = app.listen(PORT, () => {
-    console.log(`[${clientConfig.brand.name}] Onboarding Agent on port ${PORT}`);
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`[Dev] http://localhost:${PORT}`);
-    }
-  });
+const dbInit = initDb().then(() => {
+  dbReady = true;
 
-  // Session cleanup — run every hour, delete sessions older than 30 days
-  const CLEANUP_INTERVAL = 60 * 60 * 1000;
-  const SESSION_TTL_DAYS = parseInt(process.env.SESSION_TTL_DAYS || "30", 10);
-  setInterval(() => {
-    cleanupOldSessions(SESSION_TTL_DAYS)
-      .catch(err => console.error("[Cleanup] Error:", err.message));
-  }, CLEANUP_INTERVAL);
+  // Only start HTTP server when NOT on Vercel (Vercel handles routing itself)
+  if (!IS_VERCEL) {
+    server = app.listen(PORT, () => {
+      console.log(`[${clientConfig.brand.name}] Onboarding Agent on port ${PORT}`);
+      if (process.env.NODE_ENV !== "production") {
+        console.log(`[Dev] http://localhost:${PORT}`);
+      }
+    });
 
-  // CRM retry worker — runs every 5 minutes, retries failed submissions
-  const RETRY_INTERVAL = 5 * 60 * 1000;
-  setInterval(() => {
-    retryFailedSubmissions()
-      .catch(err => console.error("[Retry] Worker error:", err.message));
-  }, RETRY_INTERVAL);
+    // Background workers only run on persistent servers (not serverless)
+    const CLEANUP_INTERVAL = 60 * 60 * 1000;
+    const SESSION_TTL_DAYS = parseInt(process.env.SESSION_TTL_DAYS || "30", 10);
+    setInterval(() => {
+      cleanupOldSessions(SESSION_TTL_DAYS)
+        .catch(err => console.error("[Cleanup] Error:", err.message));
+    }, CLEANUP_INTERVAL);
 
+    const RETRY_INTERVAL = 5 * 60 * 1000;
+    setInterval(() => {
+      retryFailedSubmissions()
+        .catch(err => console.error("[Retry] Worker error:", err.message));
+    }, RETRY_INTERVAL);
+  }
 }).catch(err => {
   console.error("[DB] Init failed:", err.message);
-  process.exit(1);
+  if (!IS_VERCEL) process.exit(1);
 });
 
 // ── CRM retry worker ────────────────────────────────────────────
