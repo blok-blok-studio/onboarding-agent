@@ -7,6 +7,10 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <title>Onboarding Agent</title>
   <style>
+    :root {
+      --brand-color: #2563eb;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -25,10 +29,11 @@
       max-height: 780px;
       background: #111;
       border: 1px solid #222;
-      border-radius: 12px;
+      border-radius: 16px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
 
     .chat-header {
@@ -37,16 +42,25 @@
       border-bottom: 1px solid #222;
     }
 
-    .chat-header h1 { font-size: 16px; font-weight: 700; color: #fff; }
-    .chat-header p  { font-size: 12px; color: #555; margin-top: 3px; }
+    .chat-header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-header p { font-size: 12px; color: #666; margin-top: 4px; }
 
     .status-dot {
       display: inline-block;
-      width: 7px; height: 7px;
+      width: 8px; height: 8px;
       background: #4ade80;
       border-radius: 50%;
       margin-right: 6px;
       vertical-align: middle;
+      box-shadow: 0 0 6px rgba(74, 222, 128, 0.4);
     }
 
     .messages {
@@ -55,17 +69,29 @@
       padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 16px;
+      scroll-behavior: smooth;
     }
 
+    .messages::-webkit-scrollbar { width: 4px; }
+    .messages::-webkit-scrollbar-track { background: transparent; }
+    .messages::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
     .message {
-      max-width: 82%;
-      padding: 12px 16px;
-      border-radius: 12px;
+      max-width: 85%;
+      padding: 14px 18px;
+      border-radius: 16px;
       font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.65;
       word-break: break-word;
       overflow-wrap: break-word;
+      animation: fadeIn 0.3s ease;
+      white-space: pre-line;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     .message.assistant {
@@ -73,31 +99,34 @@
       color: #e5e5e5;
       align-self: flex-start;
       border: 1px solid #252525;
+      border-bottom-left-radius: 4px;
     }
 
     .message.user {
-      background: #fff;
-      color: #000;
+      background: var(--brand-color);
+      color: #fff;
       align-self: flex-end;
+      border-bottom-right-radius: 4px;
     }
 
     .message.system {
       background: transparent;
-      color: #444;
-      font-size: 11px;
+      color: #555;
+      font-size: 12px;
       align-self: center;
-      border: 1px solid #222;
-      padding: 6px 12px;
+      border: 1px solid #1f1f1f;
+      padding: 6px 14px;
       border-radius: 20px;
     }
 
     .typing {
       display: none;
       gap: 5px;
-      padding: 12px 16px;
+      padding: 14px 18px;
       background: #1a1a1a;
       border: 1px solid #252525;
-      border-radius: 12px;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
       width: fit-content;
       align-self: flex-start;
     }
@@ -106,7 +135,7 @@
 
     .typing span {
       width: 6px; height: 6px;
-      background: #444;
+      background: #555;
       border-radius: 50%;
       animation: bounce 1.2s infinite;
     }
@@ -120,7 +149,7 @@
     }
 
     .input-area {
-      padding: 14px 20px;
+      padding: 16px 20px;
       border-top: 1px solid #1a1a1a;
       display: flex;
       gap: 10px;
@@ -132,45 +161,57 @@
       background: #1a1a1a;
       border: 1px solid #252525;
       color: #fff;
-      padding: 11px 14px;
-      border-radius: 8px;
+      padding: 12px 16px;
+      border-radius: 12px;
       font-size: 14px;
       font-family: inherit;
       resize: none;
       outline: none;
       line-height: 1.5;
       max-height: 120px;
-      transition: border-color .15s;
+      transition: border-color .2s;
     }
 
-    textarea:focus   { border-color: #3a3a3a; }
-    textarea::placeholder { color: #3a3a3a; }
+    textarea:focus { border-color: var(--brand-color); }
+    textarea::placeholder { color: #444; }
 
-    button {
-      background: #fff;
-      color: #000;
+    button#send {
+      background: var(--brand-color);
+      color: #fff;
       border: none;
-      padding: 11px 18px;
-      border-radius: 8px;
+      padding: 12px 20px;
+      border-radius: 12px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       align-self: flex-end;
-      transition: opacity .15s;
+      transition: opacity .15s, transform .1s;
+      min-width: 70px;
     }
 
-    button:hover    { opacity: .85; }
-    button:disabled { opacity: .25; cursor: default; }
+    button#send:hover    { opacity: .9; }
+    button#send:active   { transform: scale(0.97); }
+    button#send:disabled { opacity: .3; cursor: default; transform: none; }
 
     .footer {
       text-align: center;
       font-size: 11px;
       color: #2a2a2a;
-      padding: 8px;
-      background: #0d0d0d;
+      padding: 10px;
+      background: #0a0a0a;
     }
 
-    .footer a { color: #333; text-decoration: none; }
+    .footer a { color: #3a3a3a; text-decoration: none; }
+    .footer a:hover { color: #555; }
+
+    @media (max-width: 680px) {
+      .chat-container {
+        max-height: 100vh;
+        border-radius: 0;
+        border: none;
+      }
+      body { background: #111; }
+    }
   </style>
 </head>
 <body>
@@ -199,24 +240,23 @@
   <script>
     "use strict";
 
-    const API = window.location.origin;
-    const MAX_MSG_LENGTH = 2000;
-    let sessionId = null;
-    let busy = false;
-    let done = false;
+    var API = window.location.origin;
+    var MAX_MSG_LENGTH = 2000;
+    var sessionId = null;
+    var busy = false;
+    var done = false;
 
-    const messagesEl = document.getElementById("messages");
-    const inputEl    = document.getElementById("input");
-    const sendBtn    = document.getElementById("send");
-    const typingEl   = document.getElementById("typing");
+    var messagesEl = document.getElementById("messages");
+    var inputEl    = document.getElementById("input");
+    var sendBtn    = document.getElementById("send");
+    var typingEl   = document.getElementById("typing");
 
     // XSS-safe message rendering — always uses textContent, never innerHTML
     function addMessage(role, text) {
-      // Validate role to prevent class injection
-      const safeRole = ["assistant", "user", "system"].includes(role) ? role : "system";
-      const div = document.createElement("div");
+      var safeRole = ["assistant", "user", "system"].indexOf(role) !== -1 ? role : "system";
+      var div = document.createElement("div");
       div.className = "message " + safeRole;
-      div.textContent = text; // textContent is XSS-safe
+      div.textContent = text;
       messagesEl.insertBefore(div, typingEl);
       messagesEl.scrollTop = messagesEl.scrollHeight;
     }
@@ -225,15 +265,22 @@
       busy = val;
       typingEl.classList.toggle("show", val);
       messagesEl.scrollTop = messagesEl.scrollHeight;
-      sendBtn.disabled   = val || done;
-      inputEl.disabled   = val || done;
+      sendBtn.disabled = val || done;
+      inputEl.disabled = val || done;
+      if (!val && !done) inputEl.focus();
+    }
+
+    function handleDone() {
+      done = true;
+      sendBtn.disabled = true;
+      inputEl.disabled = true;
+      inputEl.placeholder = "Conversation complete. Refresh to start a new one.";
     }
 
     async function send() {
-      const msg = inputEl.value.trim();
+      var msg = inputEl.value.trim();
       if (!msg || busy || done) return;
 
-      // Client-side length check
       if (msg.length > MAX_MSG_LENGTH) {
         addMessage("system", "Message too long. Please keep it under " + MAX_MSG_LENGTH + " characters.");
         return;
@@ -245,32 +292,30 @@
       setBusy(true);
 
       try {
-        const r = await fetch(API + "/api/chat", {
+        var r = await fetch(API + "/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ sessionId: sessionId, message: msg })
         });
 
         if (!r.ok) {
-          const err = await r.json().catch(function() { return {}; });
+          var errData = await r.json().catch(function() { return {}; });
           setBusy(false);
-          addMessage("system", err.error || "Something went wrong. Please try again.");
+          addMessage("system", errData.error || "Something went wrong. Please try again.");
           return;
         }
 
-        const data = await r.json();
-        sessionId  = data.sessionId;
+        var data = await r.json();
+        sessionId = data.sessionId;
         setBusy(false);
         addMessage("assistant", data.reply);
 
         if (data.done) {
-          done = true;
-          setBusy(false);
-          inputEl.placeholder = "Conversation complete.";
+          handleDone();
         }
       } catch (e) {
         setBusy(false);
-        addMessage("system", "Connection error — please refresh.");
+        addMessage("system", "Connection error \u2014 please refresh.");
       }
     }
 
@@ -283,31 +328,37 @@
       inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
     });
 
-    // Load branding + kick off greeting
+    // Load branding + get instant greeting
     async function init() {
+      // Load config for branding
       try {
-        const r   = await fetch(API + "/api/config");
-        const cfg = await r.json();
+        var r = await fetch(API + "/api/config");
+        var cfg = await r.json();
         document.title = cfg.brandName;
         document.getElementById("brand-name").textContent = cfg.brandName;
         document.getElementById("agent-role").textContent = cfg.agentName + " \u00B7 " + cfg.agentRole;
+
+        // Apply brand color if configured
+        if (cfg.primaryColor) {
+          document.documentElement.style.setProperty("--brand-color", cfg.primaryColor);
+        }
       } catch (e) { /* use defaults */ }
 
-      setBusy(true);
+      // Get instant greeting from /api/start (no Claude API call needed)
       try {
-        const r    = await fetch(API + "/api/chat", {
+        var r2 = await fetch(API + "/api/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: "start" })
+          body: JSON.stringify({})
         });
-        const data = await r.json();
-        sessionId  = data.sessionId;
-        setBusy(false);
+        var data = await r2.json();
+        sessionId = data.sessionId;
         addMessage("assistant", data.reply);
       } catch (e) {
-        setBusy(false);
         addMessage("system", "Unable to connect. Please refresh.");
       }
+
+      inputEl.focus();
     }
 
     init();

@@ -88,6 +88,24 @@ app.post("/api/chat", chatLimiter, async (req, res) => {
   }
 });
 
+// ── POST /api/start ──────────────────────────────────────────
+// Start a new session and get the greeting without a user message.
+// The UI calls this on load for instant greeting.
+app.post("/api/start", chatLimiter, async (req, res) => {
+  try {
+    const sessionId = uuidv4();
+    const greeting = clientConfig.agent.greeting;
+
+    // Store the greeting as the first assistant message
+    await appendMessage(sessionId, { role: "assistant", content: greeting });
+
+    res.json({ sessionId, reply: greeting, done: false });
+  } catch (err) {
+    console.error("[/api/start]", err.message);
+    res.status(500).json({ error: "Something went wrong. Please try again." });
+  }
+});
+
 // ── GET /api/config ────────────────────────────────────────────
 // Public branding info for the UI — no sensitive data exposed.
 app.get("/api/config", (_req, res) => {
@@ -96,6 +114,7 @@ app.get("/api/config", (_req, res) => {
     brandTagline: clientConfig.brand.tagline || "",
     agentName:    clientConfig.agent.name,
     agentRole:    clientConfig.agent.role,
+    primaryColor: clientConfig.brand.primaryColor || null,
   });
 });
 
