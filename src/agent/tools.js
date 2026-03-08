@@ -48,7 +48,7 @@ function buildTools() {
     },
     {
       name: "escalate_to_human",
-      description: "Call this when the user asks something outside your knowledge base, or explicitly asks to speak to a person.",
+      description: "Call this ONLY when the user EXPLICITLY asks to speak to a real person or human. Do NOT escalate just because a topic is unusual — redirect the conversation back to intake instead. Always collect name and email BEFORE escalating.",
       input_schema: {
         type: "object",
         properties: {
