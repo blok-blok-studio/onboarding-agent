@@ -164,11 +164,14 @@ app.get("/api/config", (_req, res) => {
   }
 
   res.json({
-    brandName:    clientConfig.brand.name,
-    brandTagline: clientConfig.brand.tagline || "",
-    agentName:    clientConfig.agent.name,
-    agentRole:    clientConfig.agent.role,
+    brandName:        clientConfig.brand.name,
+    brandTagline:     clientConfig.brand.tagline || "",
+    headline:         clientConfig.brand.headline || "",
+    subtitle:         clientConfig.brand.subtitle || "",
+    agentName:        clientConfig.agent.name,
+    agentRole:        clientConfig.agent.role,
     primaryColor,
+    suggestedPrompts: clientConfig.suggestedPrompts || [],
   });
 });
 

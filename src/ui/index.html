@@ -91,6 +91,31 @@
       box-shadow: 0 0 6px rgba(74,222,128,0.4);
     }
 
+    /* ── Stats bar ───────────────────────────────────── */
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      margin-top: 28px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .stat-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .stat strong {
+      color: #aaa;
+      font-weight: 600;
+    }
+
     /* ── Chat preview in hero ─────────────────────────── */
     .hero-chat {
       background: #111;
@@ -212,6 +237,36 @@
       30% { transform: translateY(-5px); }
     }
 
+    /* ── Suggested prompts ──────────────────────────── */
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 12px;
+      animation: fadeIn 0.4s ease 0.3s both;
+    }
+
+    .suggestion-chip {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #ccc;
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      white-space: nowrap;
+    }
+
+    .suggestion-chip:hover {
+      border-color: var(--brand-color);
+      color: #fff;
+      background: rgba(37,99,235,0.08);
+    }
+
+    .suggestion-chip:active { transform: scale(0.97); }
+
     .input-area {
       padding: 12px 14px;
       border-top: 1px solid #1a1a1a;
@@ -256,6 +311,82 @@
     button#send:hover    { opacity: .9; }
     button#send:active   { transform: scale(0.97); }
     button#send:disabled { opacity: .3; cursor: default; transform: none; }
+
+    .chat-powered {
+      text-align: center;
+      font-size: 10px;
+      color: #2a2a2a;
+      padding: 5px;
+      background: #0a0a0a;
+    }
+
+    .chat-powered a { color: #3a3a3a; text-decoration: none; }
+    .chat-powered a:hover { color: #555; }
+
+    /* ── How it works ────────────────────────────────── */
+    .how-it-works {
+      padding: 80px 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .how-it-works h2 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      position: relative;
+    }
+
+    .steps::before {
+      content: "";
+      position: absolute;
+      top: 32px;
+      left: 15%;
+      right: 15%;
+      height: 2px;
+      background: linear-gradient(to right, var(--brand-color), #333, var(--brand-color));
+      opacity: 0.3;
+    }
+
+    .step {
+      text-align: center;
+      position: relative;
+    }
+
+    .step-number {
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: #111;
+      border: 2px solid #252525;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin: 0 auto 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.6;
+    }
 
     /* ── Features section ─────────────────────────────── */
     .features {
@@ -319,6 +450,51 @@
       line-height: 1.6;
     }
 
+    /* ── Multi-channel section ────────────────────────── */
+    .channels {
+      padding: 60px 24px 80px;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .channels h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+
+    .channels > p {
+      color: #666;
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+
+    .channel-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .channel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 30px;
+      font-size: 14px;
+      color: #aaa;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .channel-pill:hover { border-color: #2a2a2a; color: #ccc; }
+
+    .channel-pill .ch-icon { font-size: 18px; line-height: 1; }
+
     /* ── Embed section ────────────────────────────────── */
     .embed-section {
       padding: 60px 24px 80px;
@@ -380,8 +556,11 @@
         text-align: center;
       }
       .hero-text p { margin-left: auto; margin-right: auto; }
+      .stats-bar { justify-content: center; }
       .hero-chat { height: 480px; }
       .features-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; gap: 24px; }
+      .steps::before { display: none; }
     }
 
     @media (max-width: 600px) {
@@ -389,6 +568,7 @@
       .hero-text p { font-size: 15px; }
       .hero-chat { height: 420px; }
       .features-grid { grid-template-columns: 1fr; }
+      .stats-bar { flex-direction: column; gap: 12px; align-items: center; }
     }
   </style>
 </head>
@@ -402,14 +582,24 @@
           <span class="dot"></span>
           AI Agent Online
         </div>
-        <h1 id="hero-headline">
-          Turn Visitors Into <span>Qualified Leads</span> — Automatically
-        </h1>
-        <p id="hero-sub">
-          An AI-powered conversational agent that engages your website visitors 24/7,
-          qualifies them in real-time, and sends warm leads straight to your CRM.
-        </p>
+        <h1 id="hero-headline">Loading...</h1>
+        <p id="hero-sub"></p>
         <a href="#chat-section" class="hero-cta">Try the Demo</a>
+
+        <div class="stats-bar">
+          <div class="stat">
+            <span class="stat-icon">&#9889;</span>
+            <span><strong>Responds in &lt;2s</strong></span>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">&#128337;</span>
+            <span><strong>24/7</strong> availability</span>
+          </div>
+          <div class="stat">
+            <span class="stat-icon">&#128200;</span>
+            <span><strong>3x</strong> more leads than forms</span>
+          </div>
+        </div>
       </div>
 
       <!-- Live chat preview -->
@@ -425,10 +615,38 @@
           </div>
         </div>
 
+        <div class="suggestions" id="suggestions"></div>
+
         <div class="input-area">
           <textarea id="input" placeholder="Type a message..." rows="1" maxlength="2000"></textarea>
           <button id="send">Send</button>
         </div>
+
+        <div class="chat-powered">
+          Powered by <a href="https://blokblokstudio.com" target="_blank" rel="noopener noreferrer">Blok Blok Studio</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How It Works ─────────────────────────────── -->
+  <section class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">&#128172;</div>
+        <h3>Visitor Chats</h3>
+        <p>Your AI agent greets visitors and has a natural conversation — no forms, no friction.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">&#9989;</div>
+        <h3>Agent Qualifies</h3>
+        <p>Screens prospects against your criteria in real-time. Only qualified leads reach your team.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">&#128279;</div>
+        <h3>Lead Hits Your CRM</h3>
+        <p>Contact created in HubSpot, Salesforce, or any CRM. Team gets notified instantly.</p>
       </div>
     </div>
   </section>
@@ -472,6 +690,22 @@
     </div>
   </section>
 
+  <!-- ── Multi-Channel ────────────────────────────── -->
+  <section class="channels">
+    <h2>Deploy Everywhere</h2>
+    <p>Your agent runs on every channel your customers use — simultaneously.</p>
+
+    <div class="channel-grid">
+      <div class="channel-pill"><span class="ch-icon">&#127760;</span> Website Widget</div>
+      <div class="channel-pill"><span class="ch-icon">&#128242;</span> WhatsApp</div>
+      <div class="channel-pill"><span class="ch-icon">&#9993;</span> Telegram</div>
+      <div class="channel-pill"><span class="ch-icon">&#128490;</span> Discord</div>
+      <div class="channel-pill"><span class="ch-icon">&#128172;</span> Slack</div>
+      <div class="channel-pill"><span class="ch-icon">&#128241;</span> iMessage</div>
+      <div class="channel-pill"><span class="ch-icon">&#128274;</span> Signal</div>
+    </div>
+  </section>
+
   <!-- ── Embed Code ─────────────────────────────────── -->
   <section class="embed-section">
     <h2>Add to Any Website</h2>
@@ -501,10 +735,35 @@
     var busy = false;
     var done = false;
 
-    var messagesEl = document.getElementById("messages");
-    var inputEl    = document.getElementById("input");
-    var sendBtn    = document.getElementById("send");
-    var typingEl   = document.getElementById("typing");
+    var messagesEl    = document.getElementById("messages");
+    var inputEl       = document.getElementById("input");
+    var sendBtn       = document.getElementById("send");
+    var typingEl      = document.getElementById("typing");
+    var suggestionsEl = document.getElementById("suggestions");
+    var suggestedPrompts = [];
+
+    function showSuggestions() {
+      if (!suggestedPrompts.length) return;
+      suggestionsEl.innerHTML = "";
+      suggestedPrompts.forEach(function(text) {
+        var chip = document.createElement("button");
+        chip.className = "suggestion-chip";
+        chip.textContent = text;
+        chip.addEventListener("click", function() {
+          hideSuggestions();
+          inputEl.value = text;
+          send();
+        });
+        suggestionsEl.appendChild(chip);
+      });
+    }
+
+    function hideSuggestions() {
+      if (suggestionsEl) {
+        suggestionsEl.innerHTML = "";
+        suggestionsEl.style.display = "none";
+      }
+    }
 
     function addMessage(role, text) {
       var safeRole = ["assistant", "user", "system"].indexOf(role) !== -1 ? role : "system";
@@ -540,6 +799,7 @@
         return;
       }
 
+      hideSuggestions();
       inputEl.value = "";
       inputEl.style.height = "auto";
       addMessage("user", msg);
@@ -591,14 +851,40 @@
       try {
         var r = await fetch(API + "/api/config");
         var cfg = await r.json();
+
+        // Page title
         document.title = cfg.brandName + " \u2014 AI Onboarding Agent";
+
+        // Hero — use config values, fall back to defaults
+        if (cfg.headline) {
+          document.getElementById("hero-headline").innerHTML = cfg.headline;
+        } else {
+          document.getElementById("hero-headline").innerHTML =
+            "Turn Visitors Into <span>Qualified Leads</span> \u2014 Automatically";
+        }
+        document.getElementById("hero-sub").textContent =
+          cfg.subtitle || "An AI-powered conversational agent that engages your website visitors 24/7, qualifies them in real-time, and sends warm leads straight to your CRM.";
+
+        // Chat header
         document.getElementById("brand-name").textContent = cfg.brandName;
-        document.getElementById("agent-role").textContent = cfg.agentName + " \u00B7 " + cfg.agentRole;
+        document.getElementById("agent-role").textContent =
+          cfg.agentName + " \u00B7 " + cfg.agentRole;
+
+        // Brand color
         if (cfg.primaryColor) {
           document.documentElement.style.setProperty("--brand-color", cfg.primaryColor);
         }
-      } catch (e) {}
 
+        // Suggested prompts from config
+        if (cfg.suggestedPrompts && cfg.suggestedPrompts.length) {
+          suggestedPrompts = cfg.suggestedPrompts;
+        }
+      } catch (e) {
+        document.getElementById("hero-headline").innerHTML =
+          "Turn Visitors Into <span>Qualified Leads</span> \u2014 Automatically";
+      }
+
+      // Start session
       try {
         var r2 = await fetch(API + "/api/start", {
           method: "POST",
@@ -608,6 +894,7 @@
         var data = await r2.json();
         sessionId = data.sessionId;
         addMessage("assistant", data.reply);
+        showSuggestions();
       } catch (e) {
         addMessage("system", "Unable to connect. Please refresh.");
       }

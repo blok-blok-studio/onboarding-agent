@@ -19,7 +19,20 @@ module.exports = {
     name: "Apex Solutions",
     tagline: "Modern consulting for growing businesses",
     primaryColor: "#2563eb",
+    // Landing page hero — shown on the main demo page
+    headline: "Turn Visitors Into <span>Qualified Leads</span> — Automatically",
+    subtitle: "An AI-powered conversational agent that engages your website visitors 24/7, qualifies them in real-time, and sends warm leads straight to your CRM.",
   },
+
+  // ── Suggested Prompts ───────────────────────────────────────
+  // Clickable chips shown after the agent greeting to help
+  // visitors start the conversation. 3-4 short phrases.
+  suggestedPrompts: [
+    "I need help growing my business",
+    "What services do you offer?",
+    "How much does it cost?",
+    "I'd like to schedule a call",
+  ],
 
   // ── Agent Persona ─────────────────────────────────────────
   agent: {
